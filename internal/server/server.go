@@ -5,44 +5,51 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/MaximkaSha/gophkeeper/internal/models"
 	pb "github.com/MaximkaSha/gophkeeper/internal/proto"
+	"github.com/MaximkaSha/gophkeeper/internal/storage"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type GophkeeperServer struct {
+	DB *storage.Storage
 	pb.UnimplementedGophkeeperServer
 }
 
 func NewGophkeeperServer() GophkeeperServer {
-	return GophkeeperServer{}
+	return GophkeeperServer{
+		DB: storage.NewStorage(),
+	}
 }
 
 func (g GophkeeperServer) AddPassword(ctx context.Context, in *pb.AddPasswordRequest) (*pb.AddPasswordResponse, error) {
 	var response pb.AddPasswordResponse
-
-	log.Println(in.Password)
-
+	data := models.Password{}
+	data.FromProto(in.Password)
+	err := g.DB.AddPassword(data)
+	if err != nil {
+		return &response, status.Errorf(codes.InvalidArgument, `Error adding password data`)
+	}
 	return &response, nil
 }
 
 func (g GophkeeperServer) GetPassword(ctx context.Context, in *pb.GetPasswordRequest) (*pb.GetPasswordResponse, error) {
 	var response pb.GetPasswordResponse
-
-	log.Println(in.Id)
-	pass := pb.Password{
-		Login:    "login resp",
-		Password: "pass resp",
-		Tag:      "tag resp",
-		Id:       "111",
+	data, err := g.DB.GetPassword(in.Id)
+	if err != nil {
+		return &response, status.Errorf(codes.InvalidArgument, `Error getting password with uuid: `+in.Id)
 	}
-	response.Password = &pass
-	log.Println(&response)
+	response.Password = data.ToProto()
 	return &response, nil
 }
 
 func (g GophkeeperServer) DelPassword(ctx context.Context, in *pb.DelPasswordRequest) (*pb.DelPasswordResponse, error) {
 	var response pb.DelPasswordResponse
-
-	log.Println(in.Id)
+	err := g.DB.DelPassword(in.Id)
+	if err != nil {
+		return &response, status.Errorf(codes.InvalidArgument, `Error deliting password with uuid: `+in.Id)
+	}
 	return &response, nil
 }
 
@@ -50,21 +57,25 @@ func (g GophkeeperServer) UpdatePassword(ctx context.Context, in *pb.UpdatePassw
 	var response pb.UpdatePasswordResponse
 	log.Println(in.Id)
 	log.Println(in.Password)
-
+	data := models.Password{}
+	data.FromProto(in.Password)
+	err := g.DB.UpdatePassword(in.Id, data)
+	if err != nil {
+		return &response, status.Errorf(codes.InvalidArgument, `Error updating password with uuid: `+in.Id)
+	}
 	return &response, nil
 }
 
 func (g GophkeeperServer) GetAllPassword(ctx context.Context, in *pb.GetAllPasswordRequest) (*pb.GetAllPasswordResponse, error) {
 	var response pb.GetAllPasswordResponse
 
-	for i := 0; i < 10; i++ {
-		data := &pb.Password{
-			Login:    fmt.Sprint(i),
-			Password: fmt.Sprint(i),
-			Tag:      fmt.Sprint(i),
-			Id:       fmt.Sprint(i),
-		}
-		response.Password = append(response.Password, data)
+	data, err := g.DB.GetAllPassword()
+	if err != nil {
+		return &response, status.Errorf(codes.NotFound, `Error getting all passwords`)
+	}
+	for _, val := range data {
+		pVal := val.ToProto()
+		response.Password = append(response.Password, pVal)
 	}
 	return &response, nil
 }

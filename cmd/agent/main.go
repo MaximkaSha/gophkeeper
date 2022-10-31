@@ -11,18 +11,13 @@ import (
 )
 
 func main() {
-	// устанавливаем соединение с сервером
 	conn, err := grpc.Dial(":3200", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer conn.Close()
-	// получаем переменную интерфейсного типа UsersClient,
-	// через которую будем отправлять сообщения
 	c := pb.NewGophkeeperClient(conn)
-
-	// функция, в которой будем отправлять сообщения
-	Test(c)
+	TestPassword(c)
 }
 
 func Test(c pb.GophkeeperClient) {
@@ -132,4 +127,52 @@ func Test(c pb.GophkeeperClient) {
 	for _, data := range ccs.Creditcard {
 		log.Println(data)
 	}
+}
+
+func TestPassword(c pb.GophkeeperClient) {
+	ctx := context.Background()
+	log.Println("--------Password-----------")
+	passwords := []*pb.Password{
+		{Login: "Max", Password: "Max", Tag: "yandex"},
+		{Login: "Max2", Password: "Max2", Tag: "gmail"},
+		{Login: "Max3", Password: "max3", Tag: "SZI"},
+	}
+	for _, pass := range passwords {
+		_, err := c.AddPassword(ctx, &pb.AddPasswordRequest{Password: pass})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	passwordsFromDB, err := c.GetAllPassword(ctx, &pb.GetAllPasswordRequest{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	var uuids []string
+	log.Println("--------uuids from DB--------")
+	for _, pass := range passwordsFromDB.Password {
+		log.Println(pass)
+		uuids = append(uuids, pass.Id)
+	}
+	log.Println("--------passwords from DB--------")
+	for i, uuid := range uuids {
+		pass, err := c.GetPassword(ctx, &pb.GetPasswordRequest{Id: uuid})
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Password #%v: %s", i, pass)
+	}
+	updPass := &pb.Password{Login: "NotMax", Password: "NotMax", Tag: "rambler", Id: uuids[0]}
+	c.UpdatePassword(ctx, &pb.UpdatePasswordRequest{Password: updPass})
+	pass, err := c.GetPassword(ctx, &pb.GetPasswordRequest{Id: uuids[0]})
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Password after update: %s", pass)
+	for _, uuid := range uuids {
+		_, err := c.DelPassword(ctx, &pb.DelPasswordRequest{Id: uuid})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	log.Println("All passwords deleted")
 }
