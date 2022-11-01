@@ -32,10 +32,38 @@ type Data struct {
 	ID   string
 }
 
+func (d *Data) FromProto(proto *pb.Data) {
+	d.Data = proto.Data
+	d.Tag = proto.Tag
+	d.ID = proto.Id
+}
+
+func (d *Data) ToProto() *pb.Data {
+	return &pb.Data{
+		Data: d.Data,
+		Tag:  d.Tag,
+		Id:   d.ID,
+	}
+}
+
 type Text struct {
 	Data string
 	Tag  string
 	ID   string
+}
+
+func (d *Text) FromProto(proto *pb.Text) {
+	d.Data = proto.Text
+	d.Tag = proto.Tag
+	d.ID = proto.Id
+}
+
+func (d *Text) ToProto() *pb.Text {
+	return &pb.Text{
+		Text: d.Data,
+		Tag:  d.Tag,
+		Id:   d.ID,
+	}
 }
 
 type CreditCard struct {
@@ -43,7 +71,28 @@ type CreditCard struct {
 	Exp     string
 	Name    string
 	CVV     string
+	Tag     string
 	ID      string
+}
+
+func (c *CreditCard) FromProto(proto *pb.CreditCard) {
+	c.CardNum = proto.Cardnum
+	c.Exp = proto.Exp
+	c.Name = proto.Name
+	c.CVV = proto.Cvv
+	c.ID = proto.Id
+	c.Tag = proto.Tag
+}
+
+func (c *CreditCard) ToProto() *pb.CreditCard {
+	return &pb.CreditCard{
+		Cardnum: c.CardNum,
+		Exp:     c.Exp,
+		Name:    c.Name,
+		Cvv:     c.CVV,
+		Tag:     c.Tag,
+		Id:      c.ID,
+	}
 }
 
 type Storager interface {

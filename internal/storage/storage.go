@@ -106,17 +106,6 @@ CREATE TABLE IF NOT EXISTS public.text
 
 /*
 type Storager interface {
-	AddPassword(Password) error
-	GetPassword(string) (Password, error)
-	DelPassword(string) error
-	UpdatePassword(string, Password) error
-	GetAllPassword() ([]Password, error)
-
-	AddData(Data) error
-	GetData(string) (Data, error)
-	DelData(string) error
-	UpdateData(string, Data) error
-	GetAllData() ([]Data, error)
 
 	AddText(Text) error
 	GetText(string) (Text, error)
@@ -131,6 +120,7 @@ type Storager interface {
 	GetAllCreditCard() ([]CreditCard, error)
 }
 */
+// Password storage endpoints.
 func (s Storage) AddPassword(pass models.Password) error {
 	var query = `
 	INSERT INTO password (login,password,tag,uuid)
@@ -183,7 +173,6 @@ func (s Storage) UpdatePassword(uuid string, pass models.Password) error {
 func (s Storage) GetAllPassword() ([]models.Password, error) {
 	var query = `SELECT * from password`
 	rows, err := s.DB.Query(query)
-	//	err = rows.Err()
 	if err != nil {
 		log.Printf("Error %s when getting all  data", err)
 		return []models.Password{}, err
@@ -202,6 +191,233 @@ func (s Storage) GetAllPassword() ([]models.Password, error) {
 	}
 	if counter == 0 {
 		return []models.Password{}, errors.New("no data")
+	}
+	return data, nil
+}
+
+// Data storage block.
+func (s Storage) AddData(data models.Data) error {
+	var query = `
+	INSERT INTO data (data,tag,uuid)
+	VALUES ($1, $2, $3)`
+	_, err := s.DB.Exec(query, data.Data, data.Tag, uuid.New())
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func (s Storage) GetData(uuid string) (models.Data, error) {
+	var query = `SELECT data,tag,uuid from data WHERE uuid = $1`
+	data := models.Data{}
+	err := s.DB.QueryRow(query, uuid).Scan(&data.Data, &data.Tag, &data.ID)
+	if err != nil {
+		log.Println(err)
+		return models.Data{}, err
+	}
+	return data, nil
+}
+
+func (s Storage) DelData(uuid string) error {
+	var query = `DELETE from data WHERE uuid = $1`
+	_, err := s.DB.Exec(query, uuid)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func (s Storage) UpdateData(uuid string, data models.Data) error {
+	var query = `INSERT INTO data (data,tag,uuid) 
+	VALUES ( $1, $2, $3)
+	ON CONFLICT (uuid)
+	DO UPDATE SET
+	data = EXCLUDED.data,
+	tag = EXCLUDED.tag`
+	_, err := s.DB.Exec(query, data.Data, data.Tag, data.ID)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func (s Storage) GetAllData() ([]models.Data, error) {
+	var query = `SELECT * from data`
+	rows, err := s.DB.Query(query)
+	//	err = rows.Err()
+	if err != nil {
+		log.Printf("Error %s when getting all  data", err)
+		return []models.Data{}, err
+	}
+	defer rows.Close()
+	data := []models.Data{}
+	counter := 0
+	for rows.Next() {
+		model := models.Data{}
+		if err := rows.Scan(&model.Data, &model.Tag, &model.ID); err != nil {
+			log.Println(err)
+			return []models.Data{}, err
+		}
+		counter++
+		data = append(data, model)
+	}
+	if counter == 0 {
+		return []models.Data{}, errors.New("no data")
+	}
+	return data, nil
+}
+
+// Text storage block.
+func (s Storage) AddText(data models.Text) error {
+	var query = `
+	INSERT INTO text (text,tag,uuid)
+	VALUES ($1, $2, $3)`
+	_, err := s.DB.Exec(query, data.Data, data.Tag, uuid.New())
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func (s Storage) GetText(uuid string) (models.Text, error) {
+	var query = `SELECT text,tag,uuid from text WHERE uuid = $1`
+	data := models.Text{}
+	err := s.DB.QueryRow(query, uuid).Scan(&data.Data, &data.Tag, &data.ID)
+	if err != nil {
+		log.Println(err)
+		return models.Text{}, err
+	}
+	return data, nil
+}
+
+func (s Storage) DelText(uuid string) error {
+	var query = `DELETE from text WHERE uuid = $1`
+	_, err := s.DB.Exec(query, uuid)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func (s Storage) UpdateText(uuid string, data models.Text) error {
+	var query = `INSERT INTO text (text,tag,uuid) 
+	VALUES ( $1, $2, $3)
+	ON CONFLICT (uuid)
+	DO UPDATE SET
+	text = EXCLUDED.text,
+	tag = EXCLUDED.tag`
+	_, err := s.DB.Exec(query, data.Data, data.Tag, data.ID)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func (s Storage) GetAllText() ([]models.Text, error) {
+	var query = `SELECT * from text`
+	rows, err := s.DB.Query(query)
+	//	err = rows.Err()
+	if err != nil {
+		log.Printf("Error %s when getting all  text", err)
+		return []models.Text{}, err
+	}
+	defer rows.Close()
+	data := []models.Text{}
+	counter := 0
+	for rows.Next() {
+		model := models.Text{}
+		if err := rows.Scan(&model.Data, &model.Tag, &model.ID); err != nil {
+			log.Println(err)
+			return []models.Text{}, err
+		}
+		counter++
+		data = append(data, model)
+	}
+	if counter == 0 {
+		return []models.Text{}, errors.New("no text")
+	}
+	return data, nil
+}
+
+// CC storage block.
+func (s Storage) AddCreditCard(data models.CreditCard) error {
+	var query = `
+	INSERT INTO cc (ccnum,exp,name,cvv,tag,uuid)
+	VALUES ($1, $2, $3, $4, $5, $6)`
+	_, err := s.DB.Exec(query, data.CardNum, data.Exp, data.Name, data.CVV, data.Tag, uuid.New())
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func (s Storage) GetCreditCard(uuid string) (models.CreditCard, error) {
+	var query = `SELECT ccnum,exp,name,cvv,tag,uuid from cc WHERE uuid = $1`
+	data := models.CreditCard{}
+	err := s.DB.QueryRow(query, uuid).Scan(&data.CardNum, &data.Exp, &data.Name, &data.CVV, &data.Tag, &data.ID)
+	if err != nil {
+		log.Println(err)
+		return models.CreditCard{}, err
+	}
+	return data, nil
+}
+
+func (s Storage) DelCreditCard(uuid string) error {
+	var query = `DELETE from cc WHERE uuid = $1`
+	_, err := s.DB.Exec(query, uuid)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func (s Storage) UpdateCreditCard(uuid string, data models.CreditCard) error {
+	var query = `INSERT INTO cc (ccnum,exp,name,cvv,tag,uuid) 
+	VALUES ( $1, $2, $3, $4, $5, $6)
+	ON CONFLICT (uuid)
+	DO UPDATE SET
+	ccnum = EXCLUDED.ccnum,
+	exp = EXCLUDED.exp,
+	name = EXCLUDED.name,
+	cvv = EXCLUDED.cvv,
+	tag = EXCLUDED.tag`
+	_, err := s.DB.Exec(query, data.CardNum, data.Exp, data.Name, data.CVV, data.Tag, data.ID)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func (s Storage) GetAllCreditCard() ([]models.CreditCard, error) {
+	var query = `SELECT * from cc`
+	rows, err := s.DB.Query(query)
+	if err != nil {
+		log.Printf("Error %s when getting all cc", err)
+		return []models.CreditCard{}, err
+	}
+	defer rows.Close()
+	data := []models.CreditCard{}
+	counter := 0
+	for rows.Next() {
+		model := models.CreditCard{}
+		if err := rows.Scan(&model.CardNum, &model.Exp, &model.Name, &model.CVV, &model.Tag, &model.ID); err != nil {
+			log.Println(err)
+			return []models.CreditCard{}, err
+		}
+		counter++
+		data = append(data, model)
+	}
+	if counter == 0 {
+		return []models.CreditCard{}, errors.New("no cc")
 	}
 	return data, nil
 }

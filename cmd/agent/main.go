@@ -18,6 +18,9 @@ func main() {
 	defer conn.Close()
 	c := pb.NewGophkeeperClient(conn)
 	TestPassword(c)
+	TestData(c)
+	TestText(c)
+	TestCreditCard(c)
 }
 
 func Test(c pb.GophkeeperClient) {
@@ -175,4 +178,148 @@ func TestPassword(c pb.GophkeeperClient) {
 		}
 	}
 	log.Println("All passwords deleted")
+}
+
+func TestData(c pb.GophkeeperClient) {
+	ctx := context.Background()
+	log.Println("--------Data-----------")
+	datas := []*pb.Data{
+		{Data: []byte("Max1"), Tag: "yandex data"},
+		{Data: []byte("Max2"), Tag: "practikum data"},
+		{Data: []byte("Max3"), Tag: "szi data"},
+	}
+	for _, data := range datas {
+		_, err := c.AddData(ctx, &pb.AddDataRequest{Data: data})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	datasFromDB, err := c.GetAllData(ctx, &pb.GetAllDataRequest{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	var uuids []string
+	log.Println("--------uuids from DB--------")
+	for _, data := range datasFromDB.Data {
+		log.Println(data)
+		uuids = append(uuids, data.Id)
+	}
+	log.Println("--------data from DB--------")
+	for i, uuid := range uuids {
+		data, err := c.GetData(ctx, &pb.GetDataRequest{Id: uuid})
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Data #%v: %s", i, data)
+	}
+	updData := &pb.Data{Data: []byte("not data"), Tag: "rambler", Id: uuids[0]}
+	c.UpdateData(ctx, &pb.UpdateDataRequest{Data: updData})
+	data, err := c.GetData(ctx, &pb.GetDataRequest{Id: uuids[0]})
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Data after update: %s", data)
+	for _, uuid := range uuids {
+		_, err := c.DelData(ctx, &pb.DelDataRequest{Id: uuid})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	log.Println("All data deleted")
+}
+
+func TestText(c pb.GophkeeperClient) {
+	ctx := context.Background()
+	log.Println("--------Text-----------")
+	texts := []*pb.Text{
+		{Text: "Max1", Tag: "yandex text"},
+		{Text: "Max2", Tag: "practikum text"},
+		{Text: "Max3", Tag: "szi text"},
+	}
+	for _, text := range texts {
+		_, err := c.AddText(ctx, &pb.AddTextRequest{Text: text})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	textFromDB, err := c.GetAllText(ctx, &pb.GetAllTextRequest{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	var uuids []string
+	log.Println("--------uuids from DB--------")
+	for _, text := range textFromDB.Text {
+		log.Println(text)
+		uuids = append(uuids, text.Id)
+	}
+	log.Println("--------text from DB--------")
+	for i, uuid := range uuids {
+		text, err := c.GetText(ctx, &pb.GetTextRequest{Id: uuid})
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Text #%v: %s", i, text)
+	}
+	updText := &pb.Text{Text: "not text", Tag: "rambler", Id: uuids[0]}
+	c.UpdateText(ctx, &pb.UpdateTextRequest{Text: updText})
+	text, err := c.GetText(ctx, &pb.GetTextRequest{Id: uuids[0]})
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Text after update: %s", text)
+	for _, uuid := range uuids {
+		_, err := c.DelText(ctx, &pb.DelTextRequest{Id: uuid})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	log.Println("All text deleted")
+}
+
+func TestCreditCard(c pb.GophkeeperClient) {
+	ctx := context.Background()
+	log.Println("--------CC-----------")
+	ccs := []*pb.CreditCard{
+		{Cardnum: "11111", Exp: "11/11", Name: "Max1 Max1", Cvv: "111", Tag: "cc 1"},
+		{Cardnum: "22222", Exp: "22/22", Name: "Max2 Max2", Cvv: "222", Tag: "cc 2"},
+		{Cardnum: "33333", Exp: "33/33", Name: "Max3 Max3", Cvv: "333", Tag: "cc 3"},
+	}
+	for _, cc := range ccs {
+		_, err := c.AddCreditCard(ctx, &pb.AddCreditCardRequest{Creditcard: cc})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	ccFromDB, err := c.GetAllCreditCard(ctx, &pb.GetAllCreditCardRequest{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	var uuids []string
+	log.Println("--------uuids from DB--------")
+	for _, cc := range ccFromDB.Creditcard {
+		log.Println(cc)
+		uuids = append(uuids, cc.Id)
+	}
+	log.Println("--------cc from DB--------")
+	for i, uuid := range uuids {
+		cc, err := c.GetCreditCard(ctx, &pb.GetCreditCardRequest{Id: uuid})
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("CC #%v: %s", i, cc)
+	}
+	updCC := &pb.CreditCard{Cardnum: "44444", Exp: "44/44", Name: "Max4 Max4", Cvv: "444", Tag: "cc 4", Id: uuids[0]}
+	c.UpdateCreditCard(ctx, &pb.UpdateCreditCardRequest{Creditcard: updCC})
+	cc, err := c.GetCreditCard(ctx, &pb.GetCreditCardRequest{Id: uuids[0]})
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("CC after update: %s", cc)
+	for _, uuid := range uuids {
+		_, err := c.DelCreditCard(ctx, &pb.DelCreditCardRequest{Id: uuid})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	log.Println("All cc deleted")
 }
