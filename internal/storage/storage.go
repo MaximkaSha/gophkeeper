@@ -92,6 +92,13 @@ CREATE TABLE IF NOT EXISTS public.text
     uuid uuid NOT NULL,
     CONSTRAINT text_pkey PRIMARY KEY (uuid)
 );
+CREATE TABLE IF NOT EXISTS public.users
+(
+    email character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    password character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    secret character varying(100) COLLATE pg_catalog."default",
+    CONSTRAINT users_pkey PRIMARY KEY (email)
+);
 `
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelfunc()
@@ -418,6 +425,30 @@ func (s Storage) GetAllCreditCard() ([]models.CreditCard, error) {
 	}
 	if counter == 0 {
 		return []models.CreditCard{}, errors.New("no cc")
+	}
+	return data, nil
+}
+
+// User group.
+func (s Storage) AddUser(user models.User) error {
+	var query = `
+	INSERT INTO users (email,password)
+	VALUES ($1, $2)`
+	_, err := s.DB.Exec(query, user.Email, user.Password)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func (s Storage) GetUser(user models.User) (models.User, error) {
+	var query = `SELECT email,password from users where email = $1`
+	data := models.User{}
+	err := s.DB.QueryRow(query, user.Email).Scan(&data.Email, &data.Password)
+	if err != nil {
+		log.Println(err)
+		return models.User{}, err
 	}
 	return data, nil
 }

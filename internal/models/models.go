@@ -2,7 +2,44 @@ package models
 
 import (
 	pb "github.com/MaximkaSha/gophkeeper/internal/proto"
+	"golang.org/x/crypto/bcrypt"
 )
+
+type User struct {
+	Email    string
+	Password string
+}
+
+func (u *User) FromProto(proto *pb.User) {
+	u.Email = proto.Email
+	u.Password = proto.Password
+}
+
+func (u *User) ToProto() *pb.User {
+	return &pb.User{
+		Email:    u.Email,
+		Password: u.Password,
+	}
+}
+
+func (u *User) HashPassword() error {
+	passBytes, err := bcrypt.GenerateFromPassword([]byte(u.Password), 14)
+	if err == nil {
+		u.Password = string(passBytes)
+		return nil
+	}
+	return err
+}
+
+func (u *User) CheckPasswordHash(hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(u.Password))
+	return !(err == nil)
+}
+
+type Token struct {
+	Email string
+	Token string
+}
 
 type Password struct {
 	Login    string
@@ -96,6 +133,9 @@ func (c *CreditCard) ToProto() *pb.CreditCard {
 }
 
 type Storager interface {
+	AddUser(User) error
+	GetUser(User) (User, error)
+
 	AddPassword(Password) error
 	GetPassword(string) (Password, error)
 	DelPassword(string) error

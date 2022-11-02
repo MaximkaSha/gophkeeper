@@ -2,25 +2,84 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"math/rand"
+	"time"
 
 	pb "github.com/MaximkaSha/gophkeeper/internal/proto"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
+func (a *Auth) UnaryAuthClientInterceptor(ctx context.Context, method string, req interface{}, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	// Add the current bearer token to the metadata and call the RPC
+	// command
+	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "bearer "+a.Token)
+	return invoker(ctx, method, req, reply, cc, opts...)
+}
+
+type Auth struct {
+	Token string
+}
+
+func (a *Auth) SetToken(token string) {
+	a.Token = token
+}
+
 func main() {
-	conn, err := grpc.Dial(":3200", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	auth := Auth{
+		Token: "",
+	}
+	conn, err := grpc.Dial(":3200", grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(auth.UnaryAuthClientInterceptor))
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer conn.Close()
+
+	u := pb.NewAuthGophkeeperClient(conn)
+	auth.SetToken(TestUser(u))
 	c := pb.NewGophkeeperClient(conn)
 	TestPassword(c)
 	TestData(c)
 	TestText(c)
 	TestCreditCard(c)
+}
+func TestUser(c pb.AuthGophkeeperClient) string {
+	ctx := context.Background()
+	log.Println("------USER--------")
+
+	rand.Seed(time.Now().UnixNano())
+	user := pb.User{
+		Email:    "test@test.com" + fmt.Sprintf("%v", (rand.Intn(10000))),
+		Password: "123456",
+	}
+	_, err := c.UserRegister(ctx, &pb.UserRegisterRequest{User: &user})
+	if err != nil {
+		log.Fatal(err)
+	}
+	response, err := c.UserLogin(ctx, &pb.UserLoginRequest{User: &user})
+	if err != nil {
+		log.Fatal(err)
+	}
+	t := time.Unix(response.Token.Expires, 0)
+	log.Printf("User:%s, token:%s, expiresAt:%s ", response.Token.Email, response.Token.Token, t.String())
+	_, err = c.Refresh(ctx, &pb.RefreshRequest{Token: response.Token})
+	if err == nil {
+		log.Fatal("no erro. Need token error")
+	}
+	log.Println("Waiting 35 sec token to expire")
+	duration := time.Second * 35
+	time.Sleep(duration)
+	newToken, err := c.Refresh(ctx, &pb.RefreshRequest{Token: response.Token})
+	if err != nil {
+		log.Fatalf("Token not refreshed:%v ", err)
+	}
+	log.Println(newToken)
+	return response.Token.Token
 }
 
 func Test(c pb.GophkeeperClient) {
