@@ -36,11 +36,7 @@ func (a AuthGophkeeperServer) UserRegister(ctx context.Context, in *pb.UserRegis
 	var response pb.UserRegisterResponse
 	user := models.User{}
 	user.FromProto(in.User)
-	err := user.HashPassword()
-	if err != nil {
-		return &response, status.Errorf(codes.Unknown, err.Error())
-	}
-	err = a.DB.AddUser(user)
+	err := a.DB.AddUser(user)
 	if err != nil {
 		return &response, status.Errorf(codes.AlreadyExists, `User already exists`)
 	}
@@ -83,6 +79,7 @@ func (a AuthGophkeeperServer) UserLogin(ctx context.Context, in *pb.UserLoginReq
 		Token:   tokenString,
 		Expires: expiresAt,
 	}
+	response.User = userPass.ToProto()
 	response.Token = &token
 	return &response, nil
 }

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"errors"
 	"log"
@@ -97,7 +98,15 @@ CREATE TABLE IF NOT EXISTS public.users
     email character varying(100) COLLATE pg_catalog."default" NOT NULL,
     password character varying(100) COLLATE pg_catalog."default" NOT NULL,
     secret character varying(100) COLLATE pg_catalog."default",
+	id bigint NOT NULL DEFAULT nextval('users_id_seq'::regclass),
     CONSTRAINT users_pkey PRIMARY KEY (email)
+);
+CREATE TABLE IF NOT EXISTS public.ciphereddata
+(
+    data bytea,
+    "type " character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    user_id bigint NOT NULL DEFAULT nextval('ciphereddata_user_id_seq'::regclass),
+    uuid uuid
 );
 `
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
@@ -111,22 +120,6 @@ CREATE TABLE IF NOT EXISTS public.users
 	return err
 }
 
-/*
-type Storager interface {
-
-	AddText(Text) error
-	GetText(string) (Text, error)
-	DelText(string) error
-	UpdateText(string, Text) error
-	GetAllText() ([]Text, error)
-
-	AddCreditCard(CreditCard) error
-	GetCreditCard(string) (CreditCard, error)
-	DelCreditCard(string) error
-	UpdateCreditCard(string, CreditCard)
-	GetAllCreditCard() ([]CreditCard, error)
-}
-*/
 // Password storage endpoints.
 func (s Storage) AddPassword(pass models.Password) error {
 	var query = `
@@ -432,9 +425,14 @@ func (s Storage) GetAllCreditCard() ([]models.CreditCard, error) {
 // User group.
 func (s Storage) AddUser(user models.User) error {
 	var query = `
-	INSERT INTO users (email,password)
-	VALUES ($1, $2)`
-	_, err := s.DB.Exec(query, user.Email, user.Password)
+	INSERT INTO users (email,password,secret)
+	VALUES ($1, $2, $3)`
+	secret, err := s.GenSecretKey()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	_, err = s.DB.Exec(query, user.Email, user.Password, secret)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -442,13 +440,65 @@ func (s Storage) AddUser(user models.User) error {
 	return nil
 }
 
+func (s Storage) GenSecretKey() (string, error) {
+	data := make([]byte, 32)
+	_, err := rand.Read(data)
+	if err != nil {
+		return ``, err
+	}
+	return string(data), nil
+}
+
 func (s Storage) GetUser(user models.User) (models.User, error) {
-	var query = `SELECT email,password from users where email = $1`
+	var query = `SELECT email,password,secret from users where email = $1`
 	data := models.User{}
-	err := s.DB.QueryRow(query, user.Email).Scan(&data.Email, &data.Password)
+	err := s.DB.QueryRow(query, user.Email).Scan(&data.Email, &data.Password, &data.Secret)
 	if err != nil {
 		log.Println(err)
 		return models.User{}, err
+	}
+	return data, nil
+}
+
+func (s Storage) AddCipheredData(data models.CipheredData) error {
+	var query = `INSERT INTO ciphereddata (data, type, user_id, uuid)
+		VALUES ($1, $2, (SELECT id from users where email = $3), $4)
+		ON CONFLICT (uuid)
+		DO UPDATE SET
+		data = EXCLUDED.data,
+		type = EXCLUDED.type`
+	if data.Id == "" {
+		data.Id = uuid.NewString()
+	}
+	_, err := s.DB.Exec(query, data.Data, data.Type, data.User, data.Id)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func (s Storage) GetCipheredData(in models.CipheredData) ([]models.CipheredData, error) {
+	var query = `SELECT * from ciphereddata where user_id = (SELECT id from users where email = $1)`
+	rows, err := s.DB.Query(query, in.User)
+	if err != nil {
+		log.Printf("Error %s when getting all cc", err)
+		return []models.CipheredData{}, err
+	}
+	defer rows.Close()
+	data := []models.CipheredData{}
+	counter := 0
+	for rows.Next() {
+		model := models.CipheredData{}
+		if err := rows.Scan(&model.Data, &model.Type, &model.User, &model.Id); err != nil {
+			log.Println(err)
+			return []models.CipheredData{}, err
+		}
+		counter++
+		data = append(data, model)
+	}
+	if counter == 0 {
+		return []models.CipheredData{}, errors.New("no data for user")
 	}
 	return data, nil
 }

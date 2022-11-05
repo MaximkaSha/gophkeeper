@@ -3,7 +3,9 @@ module github.com/MaximkaSha/gophkeeper
 go 1.18
 
 require (
+	github.com/ddulesov/gogost v1.0.0 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/ftomza/gogost v0.0.0-20200923131839-93b36ba10d5f // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect

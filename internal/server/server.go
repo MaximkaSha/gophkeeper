@@ -236,3 +236,29 @@ func (g GophkeeperServer) GetAllCreditCard(ctx context.Context, in *pb.GetAllCre
 	}
 	return &response, nil
 }
+
+func (g GophkeeperServer) AddCipheredData(ctx context.Context, in *pb.AddCipheredDataRequest) (*pb.AddCipheredDataResponse, error) {
+	var response pb.AddCipheredDataResponse
+	data := models.CipheredData{}
+	data.FromProto(in.Data)
+	err := g.DB.AddCipheredData(data)
+	if err != nil {
+		return &response, status.Errorf(codes.InvalidArgument, `Error adding ciphered data `)
+	}
+	return &response, nil
+}
+
+func (g GophkeeperServer) GetCipheredDataForUserRequest(ctx context.Context, in *pb.GetCipheredDataRequest) (*pb.GetCipheredDataResponse, error) {
+	var response pb.GetCipheredDataResponse
+	user := models.CipheredData{}
+	user.FromProto(in.Data)
+	data, err := g.DB.GetCipheredData(user)
+	if err != nil {
+		return &response, status.Errorf(codes.NotFound, `Error getting all ciphered data`)
+	}
+	for _, val := range data {
+		pVal := val.ToProto()
+		response.Data = append(response.Data, pVal)
+	}
+	return &response, nil
+}

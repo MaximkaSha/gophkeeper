@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
 	"time"
 
+	"github.com/MaximkaSha/gophkeeper/internal/crypto"
+	"github.com/MaximkaSha/gophkeeper/internal/models"
 	pb "github.com/MaximkaSha/gophkeeper/internal/proto"
 
 	"google.golang.org/grpc"
@@ -22,11 +25,16 @@ func (a *Auth) UnaryAuthClientInterceptor(ctx context.Context, method string, re
 }
 
 type Auth struct {
-	Token string
+	Token  string
+	Email  string
+	Hash   string
+	Secret []byte
 }
 
-func (a *Auth) SetToken(token string) {
+func (a *Auth) SetToken(token string, email string, secret []byte) {
 	a.Token = token
+	a.Email = email
+	a.Secret = secret
 }
 
 func main() {
@@ -39,29 +47,124 @@ func main() {
 		log.Fatal(err)
 	}
 	defer conn.Close()
-
+	TestCipher()
 	u := pb.NewAuthGophkeeperClient(conn)
 	auth.SetToken(TestUser(u))
 	c := pb.NewGophkeeperClient(conn)
-	TestPassword(c)
-	TestData(c)
-	TestText(c)
-	TestCreditCard(c)
+	TestCipheredData(c, auth)
+	//TestPassword(c)
+	//TestData(c)
+	//TestText(c)
+	//TestCreditCard(c)
 }
-func TestUser(c pb.AuthGophkeeperClient) string {
+
+func TestCipher() {
+	log.Println("------GOST Cipher Test--------")
+	cipher := crypto.NewCrypto([]byte("12345678123456781234567812345678"))
+	plain := []byte("some plain text to encrypt with GOST Kuznechik")
+	log.Println("Data to encrypt: ", string(plain))
+	crypted := cipher.Encrypt(plain)
+	log.Println("Decrypted data:")
+	log.Println(string(cipher.Decrypt(crypted)))
+
+}
+
+func SendPasswordData(data models.Password, a Auth) error {
+
+	return nil
+}
+
+func TestCipheredData(c pb.GophkeeperClient, a Auth) {
+	cipher := crypto.NewCrypto(a.Secret)
+	ctx := context.Background()
+	log.Println("------CipheredData--------")
+	testData := []pb.CipheredData{}
+	data := models.Password{
+		Login:    "Login Test",
+		Password: "Password Test",
+		Tag:      "Tag Test",
+	}
+	dataJson, err := json.Marshal(&data)
+	dataJson = cipher.Encrypt(dataJson)
+	if err != nil {
+		log.Fatal(err)
+	}
+	cData := pb.CipheredData{
+		Data:      dataJson,
+		Type:      pb.CipheredData_Type(pb.CipheredData_Type_value["PASSWORD"]),
+		Useremail: a.Email,
+	}
+	testData = append(testData, cData)
+	data1 := models.Text{
+		Data: "text",
+		Tag:  "Tag Test",
+	}
+	data1Json, err := json.Marshal(&data1)
+	data1Json = cipher.Encrypt(data1Json)
+	if err != nil {
+		log.Fatal(err)
+	}
+	ccData := pb.CipheredData{
+		Data:      data1Json,
+		Type:      pb.CipheredData_Type(pb.CipheredData_Type_value["TEXT"]),
+		Useremail: a.Email,
+	}
+	testData = append(testData, ccData)
+	for _, val := range testData {
+		_, err = c.AddCipheredData(ctx, &pb.AddCipheredDataRequest{Data: &val})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	jData, err := c.GetCipheredDataForUserRequest(ctx, &pb.GetCipheredDataRequest{Data: &cData})
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Print("-------DATA FROM DB----------")
+	for _, val := range jData.Data {
+		switch val.Type.String() {
+		case "PASSWORD":
+			val.Data = cipher.Decrypt(val.Data)
+			err = json.Unmarshal(val.Data, &data)
+			if err != nil {
+				log.Fatal("JSON unmarshal err: ", err)
+			}
+			log.Println(val.Useremail)
+			log.Println(val.Type)
+			log.Println(data)
+		case "TEXT":
+			val.Data = cipher.Decrypt(val.Data)
+			err = json.Unmarshal(val.Data, &data1)
+			if err != nil {
+				log.Fatal("JSON unmarshal err: ", err)
+			}
+			log.Println(val.Useremail)
+			log.Println(val.Type)
+			log.Println(data1)
+		}
+
+	}
+}
+
+func TestUser(c pb.AuthGophkeeperClient) (string, string, []byte) {
 	ctx := context.Background()
 	log.Println("------USER--------")
 
 	rand.Seed(time.Now().UnixNano())
-	user := pb.User{
+	user := models.User{
 		Email:    "test@test.com" + fmt.Sprintf("%v", (rand.Intn(10000))),
 		Password: "123456",
 	}
-	_, err := c.UserRegister(ctx, &pb.UserRegisterRequest{User: &user})
+	err := user.HashPassword()
 	if err != nil {
 		log.Fatal(err)
 	}
-	response, err := c.UserLogin(ctx, &pb.UserLoginRequest{User: &user})
+	userProto := user.ToProto()
+	_, err = c.UserRegister(ctx, &pb.UserRegisterRequest{User: userProto})
+	if err != nil {
+		log.Fatal(err)
+	}
+	response, err := c.UserLogin(ctx, &pb.UserLoginRequest{User: userProto})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -71,15 +174,18 @@ func TestUser(c pb.AuthGophkeeperClient) string {
 	if err == nil {
 		log.Fatal("no erro. Need token error")
 	}
-	log.Println("Waiting 35 sec token to expire")
-	duration := time.Second * 35
-	time.Sleep(duration)
-	newToken, err := c.Refresh(ctx, &pb.RefreshRequest{Token: response.Token})
-	if err != nil {
-		log.Fatalf("Token not refreshed:%v ", err)
-	}
-	log.Println(newToken)
-	return response.Token.Token
+	/*
+		log.Println("Waiting 35 sec token to expire")
+		duration := time.Second * 35
+		time.Sleep(duration)
+		newToken, err := c.Refresh(ctx, &pb.RefreshRequest{Token: response.Token})
+		if err != nil {
+			log.Fatalf("Token not refreshed:%v ", err)
+		}
+		log.Println(newToken)
+	*/
+
+	return response.Token.Token, response.Token.Email, response.User.Secret
 }
 
 func Test(c pb.GophkeeperClient) {

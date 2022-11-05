@@ -10,6 +10,7 @@ option go_package = "gophkeeper/internal/proto";
 message User {
   string email = 1;
   string password = 2;
+  bytes secret =3; 
 }
 
 message Token {
@@ -29,6 +30,7 @@ message UserLoginRequest {
 }
 message UserLoginResponse {
   Token token = 1;
+  User user = 2;
 }
 
 message RefreshRequest{

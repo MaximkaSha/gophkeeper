@@ -22,6 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GophkeeperClient interface {
+	AddCipheredData(ctx context.Context, in *AddCipheredDataRequest, opts ...grpc.CallOption) (*AddCipheredDataResponse, error)
+	GetCipheredDataForUserRequest(ctx context.Context, in *GetCipheredDataRequest, opts ...grpc.CallOption) (*GetCipheredDataResponse, error)
 	// Password group.
 	AddPassword(ctx context.Context, in *AddPasswordRequest, opts ...grpc.CallOption) (*AddPasswordResponse, error)
 	GetPassword(ctx context.Context, in *GetPasswordRequest, opts ...grpc.CallOption) (*GetPasswordResponse, error)
@@ -54,6 +56,24 @@ type gophkeeperClient struct {
 
 func NewGophkeeperClient(cc grpc.ClientConnInterface) GophkeeperClient {
 	return &gophkeeperClient{cc}
+}
+
+func (c *gophkeeperClient) AddCipheredData(ctx context.Context, in *AddCipheredDataRequest, opts ...grpc.CallOption) (*AddCipheredDataResponse, error) {
+	out := new(AddCipheredDataResponse)
+	err := c.cc.Invoke(ctx, "/gophkeeper.Gophkeeper/AddCipheredData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gophkeeperClient) GetCipheredDataForUserRequest(ctx context.Context, in *GetCipheredDataRequest, opts ...grpc.CallOption) (*GetCipheredDataResponse, error) {
+	out := new(GetCipheredDataResponse)
+	err := c.cc.Invoke(ctx, "/gophkeeper.Gophkeeper/GetCipheredDataForUserRequest", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *gophkeeperClient) AddPassword(ctx context.Context, in *AddPasswordRequest, opts ...grpc.CallOption) (*AddPasswordResponse, error) {
@@ -240,6 +260,8 @@ func (c *gophkeeperClient) GetAllCreditCard(ctx context.Context, in *GetAllCredi
 // All implementations must embed UnimplementedGophkeeperServer
 // for forward compatibility
 type GophkeeperServer interface {
+	AddCipheredData(context.Context, *AddCipheredDataRequest) (*AddCipheredDataResponse, error)
+	GetCipheredDataForUserRequest(context.Context, *GetCipheredDataRequest) (*GetCipheredDataResponse, error)
 	// Password group.
 	AddPassword(context.Context, *AddPasswordRequest) (*AddPasswordResponse, error)
 	GetPassword(context.Context, *GetPasswordRequest) (*GetPasswordResponse, error)
@@ -271,6 +293,12 @@ type GophkeeperServer interface {
 type UnimplementedGophkeeperServer struct {
 }
 
+func (UnimplementedGophkeeperServer) AddCipheredData(context.Context, *AddCipheredDataRequest) (*AddCipheredDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddCipheredData not implemented")
+}
+func (UnimplementedGophkeeperServer) GetCipheredDataForUserRequest(context.Context, *GetCipheredDataRequest) (*GetCipheredDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCipheredDataForUserRequest not implemented")
+}
 func (UnimplementedGophkeeperServer) AddPassword(context.Context, *AddPasswordRequest) (*AddPasswordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPassword not implemented")
 }
@@ -342,6 +370,42 @@ type UnsafeGophkeeperServer interface {
 
 func RegisterGophkeeperServer(s grpc.ServiceRegistrar, srv GophkeeperServer) {
 	s.RegisterService(&Gophkeeper_ServiceDesc, srv)
+}
+
+func _Gophkeeper_AddCipheredData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddCipheredDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GophkeeperServer).AddCipheredData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gophkeeper.Gophkeeper/AddCipheredData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GophkeeperServer).AddCipheredData(ctx, req.(*AddCipheredDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Gophkeeper_GetCipheredDataForUserRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCipheredDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GophkeeperServer).GetCipheredDataForUserRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gophkeeper.Gophkeeper/GetCipheredDataForUserRequest",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GophkeeperServer).GetCipheredDataForUserRequest(ctx, req.(*GetCipheredDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Gophkeeper_AddPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -711,6 +775,14 @@ var Gophkeeper_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "gophkeeper.Gophkeeper",
 	HandlerType: (*GophkeeperServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AddCipheredData",
+			Handler:    _Gophkeeper_AddCipheredData_Handler,
+		},
+		{
+			MethodName: "GetCipheredDataForUserRequest",
+			Handler:    _Gophkeeper_GetCipheredDataForUserRequest_Handler,
+		},
 		{
 			MethodName: "AddPassword",
 			Handler:    _Gophkeeper_AddPassword_Handler,
