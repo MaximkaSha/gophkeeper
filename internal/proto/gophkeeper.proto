@@ -33,187 +33,19 @@ message GetCipheredDataResponse {
   repeated CipheredData data = 1;
 }
 
-// Password type group.
-
-message Password {
-  string login = 1;
-  string password = 2;
-  string tag = 3;
-  string id = 4;
+message DelCipheredDataRequest{
+  CipheredData data = 1;
 }
-message AddPasswordRequest{
-  Password password = 1;
-}
-message AddPasswordResponse{
-}
-message GetPasswordRequest{
-  string id = 1;
-}
-message GetPasswordResponse{
-  Password password = 1;
-}
-message DelPasswordRequest{
-  string id = 1;
-}
-message DelPasswordResponse{
-}
-message UpdatePasswordRequest{
-  string id = 1;
-  Password password =2;
-}
-message UpdatePasswordResponse{
-}
-message GetAllPasswordRequest{
-}
-message GetAllPasswordResponse{
-  repeated Password password = 1;
-}
-
-// Data type group.
-
-message Data {
-  bytes data = 1;
-  string tag = 2;
-  string id = 3;
-}
-
-message AddDataRequest{
-  Data data = 1;
-}
-message AddDataResponse{
-}
-message GetDataRequest{
-  string id = 1;
-}
-message GetDataResponse{
-  Data data = 1;
-}
-message DelDataRequest{
-  string id = 1;
-}
-message DelDataResponse{
-}
-message UpdateDataRequest{
-  string id = 1;
-  Data data =2;
-}
-message UpdateDataResponse{
-}
-message GetAllDataRequest{
-}
-message GetAllDataResponse{
-  repeated Data data = 1;
+message DelCiphereDataResponse{
 }
 
 
-// Text type group.
-
-message Text {
-  string text = 1;
-  string tag = 2;
-  string id = 3;
-}
-
-message AddTextRequest{
-  Text text = 1;
-}
-message AddTextResponse{
-}
-message GetTextRequest{
-  string id = 1;
-}
-message GetTextResponse{
-  Text text = 1;
-}
-message DelTextRequest{
-  string id = 1;
-}
-message DelTextResponse{
-}
-message UpdateTextRequest{
-  string id = 1;
-  Text text =2;
-}
-message UpdateTextResponse{
-}
-message GetAllTextRequest{
-}
-message GetAllTextResponse{
-  repeated Text text = 1;
-}
-
-// Text type group.
-
-message CreditCard {
-  string cardnum = 1;
-  string exp = 2;
-  string name = 3;
-  string cvv = 4;
-  string tag = 5;
-  string id = 6;
-}
-
-message AddCreditCardRequest{
-  CreditCard creditcard = 1;
-}
-message AddCreditCardResponse{
-}
-message GetCreditCardRequest{
-  string id = 1;
-}
-message GetCreditCardResponse{
-  CreditCard creditcard = 1;
-}
-message DelCreditCardRequest{
-  string id = 1;
-}
-message DelCreditCardResponse{
-}
-message UpdateCreditCardRequest{
-  string id = 1;
-  CreditCard creditcard =2;
-}
-message UpdateCreditCardResponse{
-}
-message GetAllCreditCardRequest{
-}
-message GetAllCreditCardResponse{
-  repeated CreditCard creditcard = 1;
-}
 
 
 
 service Gophkeeper {
   rpc AddCipheredData(AddCipheredDataRequest) returns(AddCipheredDataResponse);
   rpc GetCipheredDataForUserRequest(GetCipheredDataRequest) returns(GetCipheredDataResponse);
-
-  // Password group.
-  rpc AddPassword(AddPasswordRequest) returns(AddPasswordResponse);
-  rpc GetPassword(GetPasswordRequest) returns(GetPasswordResponse);
-  rpc DelPassword(DelPasswordRequest) returns(DelPasswordResponse);
-  rpc UpdatePassword(UpdatePasswordRequest) returns(UpdatePasswordResponse);
-  rpc GetAllPassword(GetAllPasswordRequest) returns(GetAllPasswordResponse);
-
-  // Data group.
-  rpc AddData(AddDataRequest) returns(AddDataResponse);
-  rpc GetData(GetDataRequest) returns(GetDataResponse);
-  rpc DelData(DelDataRequest) returns(DelDataResponse);
-  rpc UpdateData(UpdateDataRequest) returns(UpdateDataResponse);
-  rpc GetAllData(GetAllDataRequest) returns(GetAllDataResponse);
-
-  // Text group.
-  rpc AddText(AddTextRequest) returns(AddTextResponse);
-  rpc GetText(GetTextRequest) returns(GetTextResponse);
-  rpc DelText(DelTextRequest) returns(DelTextResponse);
-  rpc UpdateText(UpdateTextRequest) returns(UpdateTextResponse);
-  rpc GetAllText(GetAllTextRequest) returns(GetAllTextResponse);
-
-  // CreditCard group.
-  rpc AddCreditCard(AddCreditCardRequest) returns(AddCreditCardResponse);
-  rpc GetCreditCard(GetCreditCardRequest) returns(GetCreditCardResponse);
-  rpc DelCreditCard(DelCreditCardRequest) returns(DelCreditCardResponse);
-  rpc UpdateCreditCard(UpdateCreditCardRequest) returns(UpdateCreditCardResponse);
-  rpc GetAllCreditCard(GetAllCreditCardRequest) returns(GetAllCreditCardResponse);
-
+  rpc DelCipheredData(DelCipheredDataRequest) returns(DelCiphereDataResponse);
 
 }

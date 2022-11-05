@@ -38,6 +38,7 @@ func (a *Auth) SetToken(token string, email string, secret []byte) {
 }
 
 func main() {
+
 	auth := Auth{
 		Token: "",
 	}
@@ -49,8 +50,9 @@ func main() {
 	defer conn.Close()
 	TestCipher()
 	u := pb.NewAuthGophkeeperClient(conn)
-	auth.SetToken(TestUser(u))
 	c := pb.NewGophkeeperClient(conn)
+	auth.SetToken(TestUser(u))
+
 	TestCipheredData(c, auth)
 	//TestPassword(c)
 	//TestData(c)
@@ -67,11 +69,6 @@ func TestCipher() {
 	log.Println("Decrypted data:")
 	log.Println(string(cipher.Decrypt(crypted)))
 
-}
-
-func SendPasswordData(data models.Password, a Auth) error {
-
-	return nil
 }
 
 func TestCipheredData(c pb.GophkeeperClient, a Auth) {
