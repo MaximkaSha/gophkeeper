@@ -19,9 +19,9 @@ type Storage struct {
 	DB               *sql.DB
 }
 
-func NewStorage() *Storage {
+func NewStorage(dsn string) *Storage {
 	s := new(Storage)
-	s.ConnectionString = "postgres://postgres:123456@127.0.0.1:5432/gophkeeper?sslmode=disable"
+	s.ConnectionString = dsn
 	err := s.InitDB()
 	if err != nil {
 		log.Panic("database error!")

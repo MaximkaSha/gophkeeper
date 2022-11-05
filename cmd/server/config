@@ -1,0 +1,7 @@
+{
+  "addr":"localhost:3200",
+  "dsn":"postgres://postgres:123456@127.0.0.1:5432/gophkeeper?sslmode=disable",
+  "certfile":"cert.pem",
+  "certkey":"key.pem",
+  "jwtsecret":"super_secret_jwt_string"
+}

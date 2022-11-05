@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 
+	"github.com/MaximkaSha/gophkeeper/internal/config"
 	"github.com/MaximkaSha/gophkeeper/internal/models"
 	pb "github.com/MaximkaSha/gophkeeper/internal/proto"
 	"github.com/MaximkaSha/gophkeeper/internal/storage"
@@ -13,11 +14,14 @@ import (
 type GophkeeperServer struct {
 	DB *storage.Storage
 	pb.UnimplementedGophkeeperServer
+	Config *config.ServerConfig
 }
 
 func NewGophkeeperServer() GophkeeperServer {
+	config := config.NewServerConfig()
 	return GophkeeperServer{
-		DB: storage.NewStorage(),
+		DB:     storage.NewStorage(config.DSN),
+		Config: config,
 	}
 }
 

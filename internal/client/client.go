@@ -7,13 +7,14 @@ import (
 	"log"
 	"time"
 
+	"github.com/MaximkaSha/gophkeeper/internal/config"
 	"github.com/MaximkaSha/gophkeeper/internal/crypto"
 	"github.com/MaximkaSha/gophkeeper/internal/models"
 	pb "github.com/MaximkaSha/gophkeeper/internal/proto"
 	"github.com/google/uuid"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -81,7 +82,6 @@ func (l *LocalStorage) AppendOrUpdate(v any) {
 	}
 
 }
-
 func (l *LocalStorage) DelFromLocalStorage(v any) {
 	switch v := v.(type) {
 	case models.Data:
@@ -136,13 +136,19 @@ type Client struct {
 	currentUser  models.User
 	auth         *Auth
 	LocalStorage *LocalStorage
+	Config       *config.ClientConfig
 }
 
 func NewClient() *Client {
 	auth := &Auth{
 		Token: "",
 	}
-	conn, err := grpc.Dial(":3200", grpc.WithTransportCredentials(insecure.NewCredentials()),
+	config := config.NewClientConfig()
+	credsTmp, err := credentials.NewClientTLSFromFile(config.CertFile, "")
+	if err != nil {
+		log.Fatalf("loading GRPC key error: %s", err.Error())
+	}
+	conn, err := grpc.Dial(config.Addr, grpc.WithTransportCredentials(credsTmp),
 		grpc.WithUnaryInterceptor(auth.UnaryAuthClientInterceptor))
 	if err != nil {
 		log.Fatal(err)

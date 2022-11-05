@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/MaximkaSha/gophkeeper/internal/config"
 	"github.com/MaximkaSha/gophkeeper/internal/models"
 	pb "github.com/MaximkaSha/gophkeeper/internal/proto"
 	"github.com/MaximkaSha/gophkeeper/internal/storage"
@@ -15,14 +16,17 @@ import (
 
 type AuthGophkeeperServer struct {
 	jwtKey []byte
+	config *config.ServerConfig
 	DB     *storage.Storage
 	pb.UnimplementedAuthGophkeeperServer
 }
 
 func NewAuthGophkeeperServer() AuthGophkeeperServer {
+	config := config.NewServerConfig()
 	return AuthGophkeeperServer{
-		jwtKey: []byte("my_secret_key"), // do I need to add random for each server start ?
-		DB:     storage.NewStorage(),
+		jwtKey: []byte(config.JWTSecret), // do I need to add random for each server start ?
+		DB:     storage.NewStorage(config.DSN),
+		config: config,
 	}
 }
 
