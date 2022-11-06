@@ -66,24 +66,24 @@ func (a AuthGophkeeperServer) UserLogin(ctx context.Context, in *pb.UserLoginReq
 	var response pb.UserLoginResponse
 	user := models.User{}
 	user.FromProto(in.User)
-	userPass := models.User{}
-	userPass, err := a.DB.GetUser(user)
+	userHash := models.User{}
+	userHash, err := a.DB.GetUser(user)
 	if err != nil {
 		return &response, status.Errorf(codes.NotFound, err.Error())
 	}
-	if user.CheckPasswordHash(userPass.Password) {
+	if !user.CheckPasswordHash(userHash.Password) {
 		return &response, status.Errorf(codes.Unauthenticated, "wrong password")
 	}
-	tokenString, expiresAt, err := a.JWTClain(userPass)
+	tokenString, expiresAt, err := a.JWTClain(userHash)
 	if err != nil {
 		return &response, status.Errorf(codes.Unknown, "JWT Generating Error")
 	}
 	token := pb.Token{
-		Email:   userPass.Email,
+		Email:   userHash.Email,
 		Token:   tokenString,
 		Expires: expiresAt,
 	}
-	response.User = userPass.ToProto()
+	response.User = userHash.ToProto()
 	response.Token = &token
 	return &response, nil
 }
