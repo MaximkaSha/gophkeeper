@@ -41,12 +41,13 @@ func (s *Storage) InitDB() error {
 	CheckError(err)
 	err = s.CreateTableIfNotExist()
 	CheckError(err)
+
 	return err
 }
 
 func CheckError(err error) {
 	if err != nil {
-		log.Printf("Database error: %s", err)
+		log.Printf("Database error: %s", err.Error())
 	}
 }
 
@@ -65,7 +66,7 @@ CREATE TABLE IF NOT EXISTS public.users
 (
     email character varying(100) COLLATE pg_catalog."default" NOT NULL,
     password character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    id bigint NOT NULL DEFAULT nextval('users_id_seq'::regclass),
+    id serial,
     secret bytea,
     CONSTRAINT users_pkey PRIMARY KEY (email)
 );
@@ -73,7 +74,7 @@ CREATE TABLE IF NOT EXISTS public.ciphereddata
 (
     data bytea,
     type character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    user_id bigint NOT NULL DEFAULT nextval('ciphereddata_user_id_seq'::regclass),
+    user_id serial,
     uuid uuid NOT NULL,
     CONSTRAINT ciphereddata_pkey PRIMARY KEY (uuid)
 );
