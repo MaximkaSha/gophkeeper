@@ -61,52 +61,21 @@ func (s Storage) CreateDBIfNotExist() error {
 
 func (s Storage) CreateTableIfNotExist() error {
 	var query = `
-	CREATE TABLE IF NOT EXISTS public.cc
-(
-    ccnum character varying(100) COLLATE pg_catalog."default",
-    exp character varying(100) COLLATE pg_catalog."default",
-    name character varying(100) COLLATE pg_catalog."default",
-    cvv character varying(100) COLLATE pg_catalog."default",
-    tag character varying COLLATE pg_catalog."default",
-    uuid uuid NOT NULL,
-    CONSTRAINT cc_pkey PRIMARY KEY (uuid)
-);
-CREATE TABLE IF NOT EXISTS public.data
-(
-    data bytea,
-    tag character varying(100) COLLATE pg_catalog."default",
-    uuid uuid NOT NULL,
-    CONSTRAINT data_pkey PRIMARY KEY (uuid)
-);
-CREATE TABLE IF NOT EXISTS public.password
-(
-    login character varying(100) COLLATE pg_catalog."default",
-    password character varying(100) COLLATE pg_catalog."default",
-    tag character varying(100) COLLATE pg_catalog."default",
-    uuid uuid NOT NULL,
-    CONSTRAINT password_pkey PRIMARY KEY (uuid)
-);
-CREATE TABLE IF NOT EXISTS public.text
-(
-    text text COLLATE pg_catalog."default",
-    tag character varying(100) COLLATE pg_catalog."default",
-    uuid uuid NOT NULL,
-    CONSTRAINT text_pkey PRIMARY KEY (uuid)
-);
 CREATE TABLE IF NOT EXISTS public.users
 (
     email character varying(100) COLLATE pg_catalog."default" NOT NULL,
     password character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    secret character varying(100) COLLATE pg_catalog."default",
-	id bigint NOT NULL DEFAULT nextval('users_id_seq'::regclass),
+    id bigint NOT NULL DEFAULT nextval('users_id_seq'::regclass),
+    secret bytea,
     CONSTRAINT users_pkey PRIMARY KEY (email)
 );
 CREATE TABLE IF NOT EXISTS public.ciphereddata
 (
     data bytea,
-    "type " character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    type character varying(100) COLLATE pg_catalog."default" NOT NULL,
     user_id bigint NOT NULL DEFAULT nextval('ciphereddata_user_id_seq'::regclass),
-    uuid uuid
+    uuid uuid NOT NULL,
+    CONSTRAINT ciphereddata_pkey PRIMARY KEY (uuid)
 );
 `
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
