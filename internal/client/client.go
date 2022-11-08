@@ -137,9 +137,11 @@ type Client struct {
 	auth         *Auth
 	LocalStorage *LocalStorage
 	Config       *config.ClientConfig
+	BuildVersion string
+	BuildTime    string
 }
 
-func NewClient() *Client {
+func NewClient(bv string, bt string) *Client {
 	auth := &Auth{
 		Token: "",
 	}
@@ -160,6 +162,8 @@ func NewClient() *Client {
 		serverClient: c,
 		auth:         auth,
 		LocalStorage: NewLocalStorage(),
+		BuildVersion: bv,
+		BuildTime:    bt,
 	}
 }
 

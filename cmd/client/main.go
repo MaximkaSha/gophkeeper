@@ -7,9 +7,14 @@ import (
 	"github.com/MaximkaSha/gophkeeper/internal/ui"
 )
 
+var (
+	BuildVersion string = "N/A"
+	BuildTime    string = "N/A"
+)
+
 func main() {
 	ctx := context.Background()
-	client := client.NewClient()
+	client := client.NewClient(BuildVersion, BuildTime)
 
 	ui.UI(ctx, *client)
 

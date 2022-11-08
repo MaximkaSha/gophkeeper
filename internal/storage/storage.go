@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS public.ciphereddata
 	defer cancelfunc()
 	_, err := s.DB.ExecContext(ctx, query)
 	if err != nil {
-		log.Printf("Error %s when creating  table", err)
+		log.Printf("Error %s when creating  table", err.Error())
 		return err
 	}
 

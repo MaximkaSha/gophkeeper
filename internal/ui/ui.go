@@ -3,7 +3,12 @@ package ui
 import (
 	"context"
 	"fmt"
+	"io/fs"
+	"io/ioutil"
 	"log"
+	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/MaximkaSha/gophkeeper/internal/client"
 	"github.com/MaximkaSha/gophkeeper/internal/models"
@@ -52,11 +57,20 @@ func UI(ctx context.Context, client client.Client) {
 				status.SetText("Registred")
 			}
 		})
-	grid := tview.NewGrid().
-		AddItem(logo, 1, 1, 1, 3, 0, 0, false).
-		AddItem(form, 2, 1, 1, 3, 0, 0, true).
-		AddItem(status, 3, 1, 1, 3, 0, 0, false)
-	err := app.SetRoot(grid, true).Run()
+	status.SetText("Client version: " + client.BuildVersion + ", client build time: " + client.BuildTime)
+
+	grid2 := tview.NewFlex().AddItem(tview.NewBox(), 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(logo, 0, 2, false).
+			AddItem(form, 0, 1, true).
+			AddItem(status, 0, 1, false), 0, 5, true).
+		AddItem(tview.NewBox(), 0, 1, false)
+
+	/*grid := tview.NewGrid().
+	AddItem(logo, 1, 1, 1, 3, 0, 0, false).
+	AddItem(form, 2, 1, 1, 3, 0, 0, true).
+	AddItem(status, 3, 1, 1, 3, 0, 0, false) */
+	err := app.SetRoot(grid2, true).Run()
 	if err != nil {
 		panic(err)
 	}
@@ -177,30 +191,28 @@ func DrawEditFromTable(ctx context.Context, client client.Client, app *tview.App
 			loggedIn(ctx, client)
 		})
 	case 3:
-		isChanged := false
+
+		path, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
 		data := client.LocalStorage.DataStorage[row-1]
-		form.AddInputField("Data: ", string(data.Data), 16, nil, func(text string) {
-			isChanged = true
-			data.Data = []byte(text)
+		form.AddInputField("Path to write: ", path+data.Tag, len(path+data.Tag), nil, func(text string) {
+			path = text
 		}).
 			AddInputField("Tag: ", data.Tag, 16, nil, func(text string) {
-				isChanged = true
+
 				data.Tag = text
 			}).
-			AddButton("Add/Update", func() {
-				if isChanged {
-					err := client.AddData(ctx, data)
-					if err != nil {
-						DrawError(err)
-					}
-				}
+			AddButton("Write file", func() {
+				os.WriteFile(path, data.Data, fs.FileMode(os.O_WRONLY))
 				app.Stop()
 				loggedIn(ctx, client)
 			}).AddButton("Del", func() {
 			client.DelData(ctx, data)
 			app.Stop()
 			loggedIn(ctx, client)
-		})
+		}).AddButton("Exit", func() { app.Stop() })
 		//return form
 
 	}
@@ -220,7 +232,7 @@ func loggedIn(ctx context.Context, client client.Client) {
 	table.SetCell(0, 0, tview.NewTableCell(fmt.Sprintf("Passwords(%v)", len(client.LocalStorage.PasswordStorage))).SetExpansion(1).SetAlign(tview.AlignCenter).SetBackgroundColor(tcell.Color100))
 	table.SetCell(0, 1, tview.NewTableCell(fmt.Sprintf("Credit Cards(%v)", len(client.LocalStorage.CCStorage))).SetExpansion(1).SetAlign(tview.AlignCenter).SetBackgroundColor(tcell.Color100))
 	table.SetCell(0, 2, tview.NewTableCell(fmt.Sprintf("Texts(%v)", len(client.LocalStorage.TextStorage))).SetExpansion(1).SetAlign(tview.AlignCenter).SetBackgroundColor(tcell.Color100))
-	table.SetCell(0, 3, tview.NewTableCell(fmt.Sprintf("Data(%v)", len(client.LocalStorage.DataStorage))).SetExpansion(1).SetAlign(tview.AlignCenter).SetBackgroundColor(tcell.Color100))
+	table.SetCell(0, 3, tview.NewTableCell(fmt.Sprintf("Files(%v)", len(client.LocalStorage.DataStorage))).SetExpansion(1).SetAlign(tview.AlignCenter).SetBackgroundColor(tcell.Color100))
 	table = UpdateTable(ctx, client, table)
 	table.SetSelectable(true, true)
 
@@ -251,7 +263,7 @@ func loggedIn(ctx context.Context, client client.Client) {
 				})
 			app.SetRoot(modal, true)
 		case tcell.KeyCtrlA:
-			formAdd := tview.NewForm().AddDropDown("Type: ", []string{"PASSWORD", "CREDIT CARD", "TEXT", "DATA"}, 0, func(option string, i int) {
+			formAdd := tview.NewForm().AddDropDown("Type: ", []string{"PASSWORD", "CREDIT CARD", "TEXT", "FILE"}, 0, func(option string, i int) {
 				switch option {
 				case "PASSWORD":
 					password := models.Password{}
@@ -292,15 +304,19 @@ func loggedIn(ctx context.Context, client client.Client) {
 					app.SetRoot(formAddText, true)
 				case "DATA":
 					data := models.Data{}
-					// TODO: ADD FILE PATH PARSING!!
-					formAddText := tview.NewForm().AddInputField("Path to file: ", "", 100, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { data.Data = []byte(text) }).
+					path := Tree()
+					formAddText := tview.NewForm().AddInputField("Path to file: ", path, len(path), func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { data.Data = []byte(text) }).
 						AddInputField("Tag: ", "", 10, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { data.Tag = text }).
 						AddButton("Add/Update", func() {
+							b, err := ioutil.ReadFile(path)
+							if err != nil {
+								log.Fatal(err)
+							}
+							data.Data = b
 							client.AddData(ctx, data)
-							//	app.SetRoot(grid, true)
 							app.Stop()
 							loggedIn(ctx, client)
-						})
+						}).SetFocus(1)
 					app.SetRoot(formAddText, true)
 				}
 			}).AddButton("Add", nil).AddButton("Back", func() { app.SetRoot(grid, true) })
@@ -315,5 +331,72 @@ func loggedIn(ctx context.Context, client client.Client) {
 	if err != nil {
 		panic(err)
 	}
+}
 
+func Tree() string {
+	app := tview.NewApplication()
+	rootDir := "."
+	if runtime.GOOS == "windows" {
+		rootDir = "C:\\"
+	}
+	root := tview.NewTreeNode(rootDir).
+		SetColor(tcell.ColorRed)
+	tree := tview.NewTreeView().
+		SetRoot(root).
+		SetCurrentNode(root)
+
+	// A helper function which adds the files and directories of the given path
+	// to the given target node.
+	add := func(target *tview.TreeNode, path string) {
+		files, err := ioutil.ReadDir(path)
+		if err != nil {
+			panic(err)
+		}
+		for _, file := range files {
+			node := tview.NewTreeNode(file.Name()).
+				SetReference(filepath.Join(path, file.Name()+"f")).
+				SetSelectable(true)
+			if file.IsDir() {
+				node = tview.NewTreeNode(file.Name()).
+					SetReference(filepath.Join(path, file.Name()+"d")).
+					SetSelectable(true)
+				node.SetColor(tcell.ColorGreen)
+			}
+			target.AddChild(node)
+		}
+
+	}
+
+	// Add the current directory to the root node.
+	add(root, rootDir)
+	path := ""
+	// If a directory was selected, open it.
+	tree.SetSelectedFunc(func(node *tview.TreeNode) {
+
+		reference := node.GetReference()
+		lastChar := reference.(string)[len(reference.(string))-1:]
+		if lastChar == "f" {
+			path = reference.(string)[:len(reference.(string))-1]
+			app.Stop()
+			return
+
+		}
+		if (reference == nil) || (reference == "d") || (reference == "f") {
+			return // Selecting the root node does nothing.
+		}
+		children := node.GetChildren()
+		if len(children) == 0 {
+			// Load and show files in this directory.
+			path := reference.(string)
+			add(node, path[:len(path)-1])
+		} else {
+			// Collapse if visible, expand if collapsed.
+			node.SetExpanded(!node.IsExpanded())
+		}
+	})
+
+	if err := app.SetRoot(tree, true).Run(); err != nil {
+		panic(err)
+	}
+	return path
 }
