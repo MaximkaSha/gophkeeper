@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
@@ -9,11 +10,14 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
 
 	"github.com/MaximkaSha/gophkeeper/internal/client"
 	"github.com/MaximkaSha/gophkeeper/internal/models"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"github.com/theplant/luhn"
 )
 
 var logo = `   
@@ -77,7 +81,15 @@ func UI(ctx context.Context, client client.Client) {
 }
 
 func DrawError(err error) {
+	app := tview.NewApplication()
 
+	modal := tview.NewModal().
+		SetText("Wrong CC Num or EXP").AddButtons([]string{"", "OK"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			if buttonLabel == "OK" {
+			}
+		}).SetTextColor(tcell.ColorRed)
+	app.SetRoot(modal, true)
 }
 
 func UpdateTable(ctx context.Context, client client.Client, table *tview.Table) *tview.Table {
@@ -96,34 +108,57 @@ func UpdateTable(ctx context.Context, client client.Client, table *tview.Table) 
 	return table
 }
 
+func CheckCCNum(textToCheck string) bool {
+	ccNum, _ := strconv.Atoi(textToCheck)
+	return luhn.Valid(ccNum)
+}
+func CheckCCExp(textToCheck string) bool {
+	exp := strings.Split(textToCheck, "/")
+	if len(exp) < 2 {
+		exp = strings.Split(textToCheck, "\\")
+		if len(exp) < 2 {
+			return false
+		}
+
+	}
+	month, _ := strconv.Atoi(exp[0])
+	year, _ := strconv.Atoi(exp[1])
+	return !(month < 12) || !(year < 70)
+}
+
 func DrawEditFromTable(ctx context.Context, client client.Client, app *tview.Application, grid *tview.Grid, row int, dType int) *tview.Form {
 	form := tview.NewForm()
 	switch dType {
 	case 1:
 		isChanged := false
 		cc := client.LocalStorage.CCStorage[row-1]
-		form.AddInputField("CCNum: ", cc.CardNum, 16, nil, func(text string) {
+		form.AddInputField("CCNum: ", cc.CardNum, 17, nil, func(text string) {
 			isChanged = true
 			cc.CardNum = text
 		}).
-			AddInputField("Exp: ", cc.Exp, 16, nil, func(text string) {
+			AddInputField("Exp: ", cc.Exp, 8, nil, func(text string) {
 				isChanged = true
 				cc.Exp = text
 			}).
-			AddInputField("Name: ", cc.Name, 16, nil, func(text string) {
+			AddInputField("Name: ", cc.Name, 16, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) {
 				isChanged = true
 				cc.Name = text
 			}).
-			AddInputField("CVV: ", cc.CVV, 16, nil, func(text string) {
+			AddInputField("CVV: ", cc.CVV, 5, func(textToCheck string, lastChar rune) bool { return len(textToCheck) == 4 }, func(text string) {
 				isChanged = true
 				cc.CVV = text
 			}).
-			AddInputField("Tag: ", cc.Tag, 16, nil, func(text string) {
+			AddInputField("Tag: ", cc.Tag, 16, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) {
 				isChanged = true
 				cc.Tag = text
 			}).
 			AddButton("Add/Update", func() {
 				if isChanged {
+					if !CheckCCNum(cc.CardNum) || !CheckCCExp(cc.Exp) {
+						DrawError(errors.New("wrong cc num or exp"))
+						app.Stop()
+						loggedIn(ctx, client)
+					}
 					err := client.AddData(ctx, cc)
 					if err != nil {
 						DrawError(err)
@@ -213,7 +248,6 @@ func DrawEditFromTable(ctx context.Context, client client.Client, app *tview.App
 			app.Stop()
 			loggedIn(ctx, client)
 		}).AddButton("Exit", func() { app.Stop() })
-		//return form
 
 	}
 	return form
@@ -268,7 +302,7 @@ func loggedIn(ctx context.Context, client client.Client) {
 				case "PASSWORD":
 					password := models.Password{}
 					formAddPass := tview.NewForm().AddInputField("Login: ", "", 10, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { password.Login = text }).
-						AddInputField("Password: ", "", 10, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { password.Password = text }).
+						AddInputField("Password: ", "", 16, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { password.Password = text }).
 						AddInputField("Tag: ", "", 10, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { password.Tag = text }).
 						AddButton("Add/Update", func() {
 							client.AddData(ctx, password)
@@ -279,14 +313,16 @@ func loggedIn(ctx context.Context, client client.Client) {
 					app.SetRoot(formAddPass, true)
 				case "CREDIT CARD":
 					cc := models.CreditCard{}
-					formAddCC := tview.NewForm().AddInputField("CC Num: ", "", 10, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { cc.CardNum = text }).
-						AddInputField("EXP: ", "", 10, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { cc.Exp = text }).
-						AddInputField("Name : ", "", 10, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { cc.Name = text }).
-						AddInputField("CVV: ", "", 10, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { cc.CVV = text }).
+					formAddCC := tview.NewForm().AddInputField("CC Num: ", "", 17, nil, func(text string) { cc.CardNum = text }).
+						AddInputField("EXP: ", "", 7, nil, func(text string) { cc.Exp = text }).
+						AddInputField("Name : ", "", 16, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { cc.Name = text }).
+						AddInputField("CVV: ", "", 5, func(textToCheck string, lastChar rune) bool { return len(textToCheck) < 4 }, func(text string) { cc.CVV = text }).
 						AddInputField("Tag: ", "", 10, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { cc.Tag = text }).
 						AddButton("Add/Update", func() {
+							if !CheckCCNum(cc.CardNum) || !CheckCCExp(cc.Exp) {
+								app.Stop()
+							}
 							client.AddData(ctx, cc)
-							//	app.SetRoot(grid, true)
 							app.Stop()
 							loggedIn(ctx, client)
 						})
