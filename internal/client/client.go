@@ -261,11 +261,7 @@ func (c *Client) RefreshToken(ctx context.Context) {
 }
 
 func (c *Client) GetAllDataFromDB(ctx context.Context) error {
-	userProto := c.currentUser.ToProto()
-	user := &models.CipheredData{}
-	user.User = userProto.Email
-	userData := user.ToProto()
-	jData, err := c.serverClient.GetCipheredDataForUserRequest(ctx, &pb.GetCipheredDataRequest{Data: userData})
+	jData, err := c.serverClient.GetCipheredDataForUserRequest(ctx, &pb.GetCipheredDataRequest{Email: c.currentUser.Email})
 	if err != nil {
 		return err
 	}
@@ -360,52 +356,52 @@ func (c *Client) AddData(ctx context.Context, v any) error {
 func (c *Client) DelData(ctx context.Context, v any) error {
 	switch v := v.(type) {
 	case models.Data:
-		dataJson, err := json.Marshal(&v)
-		dataJson = c.crypto.Encrypt(dataJson)
-		if err != nil {
-			return err
-		}
-		protoData := models.NewCipheredData(dataJson, c.currentUser.Email, "DATA", v.ID)
-		_, err = c.serverClient.DelCipheredData(ctx, &pb.DelCipheredDataRequest{Data: protoData})
+		/*	dataJson, err := json.Marshal(&v)
+			dataJson = c.crypto.Encrypt(dataJson)
+			if err != nil {
+				return err
+			}
+			protoData := models.NewCipheredData(dataJson, c.currentUser.Email, "DATA", v.ID) */
+		_, err := c.serverClient.DelCipheredData(ctx, &pb.DelCipheredDataRequest{Uuid: v.ID})
 		if err != nil {
 			return err
 		}
 		c.LocalStorage.DelFromLocalStorage(v)
 		return nil
 	case models.Password:
-		dataJson, err := json.Marshal(&v)
+		/*dataJson, err := json.Marshal(&v)
 		dataJson = c.crypto.Encrypt(dataJson)
 		if err != nil {
 			return err
 		}
-		protoData := models.NewCipheredData(dataJson, c.currentUser.Email, "PASSWORD", v.ID)
-		_, err = c.serverClient.DelCipheredData(ctx, &pb.DelCipheredDataRequest{Data: protoData})
+		protoData := models.NewCipheredData(dataJson, c.currentUser.Email, "PASSWORD", v.ID) */
+		_, err := c.serverClient.DelCipheredData(ctx, &pb.DelCipheredDataRequest{Uuid: v.ID})
 		if err != nil {
 			return err
 		}
 		c.LocalStorage.DelFromLocalStorage(v)
 		return nil
 	case models.CreditCard:
-		dataJson, err := json.Marshal(&v)
+		/*dataJson, err := json.Marshal(&v)
 		dataJson = c.crypto.Encrypt(dataJson)
 		if err != nil {
 			return err
 		}
-		protoData := models.NewCipheredData(dataJson, c.currentUser.Email, "CC", v.ID)
-		_, err = c.serverClient.DelCipheredData(ctx, &pb.DelCipheredDataRequest{Data: protoData})
+		protoData := models.NewCipheredData(dataJson, c.currentUser.Email, "CC", v.ID) */
+		_, err := c.serverClient.DelCipheredData(ctx, &pb.DelCipheredDataRequest{Uuid: v.ID})
 		if err != nil {
 			return err
 		}
 		c.LocalStorage.DelFromLocalStorage(v)
 		return nil
 	case models.Text:
-		dataJson, err := json.Marshal(&v)
+		/*dataJson, err := json.Marshal(&v)
 		dataJson = c.crypto.Encrypt(dataJson)
 		if err != nil {
 			return err
 		}
-		protoData := models.NewCipheredData(dataJson, c.currentUser.Email, "TEXT", v.ID)
-		_, err = c.serverClient.DelCipheredData(ctx, &pb.DelCipheredDataRequest{Data: protoData})
+		protoData := models.NewCipheredData(dataJson, c.currentUser.Email, "TEXT", v.ID) */
+		_, err := c.serverClient.DelCipheredData(ctx, &pb.DelCipheredDataRequest{Uuid: v.ID})
 		if err != nil {
 			return err
 		}

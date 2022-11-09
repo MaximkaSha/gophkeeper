@@ -27,14 +27,14 @@ message AddCipheredDataResponse {
 }
 
 message GetCipheredDataRequest {
-  CipheredData data = 1;
+  string email = 1;
 }
 message GetCipheredDataResponse {
   repeated CipheredData data = 1;
 }
 
 message DelCipheredDataRequest{
-  CipheredData data = 1;
+  string uuid = 1;
 }
 message DelCiphereDataResponse{
 }

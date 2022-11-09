@@ -42,7 +42,7 @@ func (a AuthGophkeeperServer) UserRegister(ctx context.Context, in *pb.UserRegis
 	user.FromProto(in.User)
 	err := a.DB.AddUser(user)
 	if err != nil {
-		return &response, status.Errorf(codes.AlreadyExists, `User already exists`)
+		return &response, status.Errorf(codes.Aborted, err.Error())
 	}
 	return &response, nil
 }
@@ -69,7 +69,7 @@ func (a AuthGophkeeperServer) UserLogin(ctx context.Context, in *pb.UserLoginReq
 	userHash := models.User{}
 	userHash, err := a.DB.GetUser(user)
 	if err != nil {
-		return &response, status.Errorf(codes.NotFound, err.Error())
+		return &response, status.Errorf(codes.Aborted, err.Error())
 	}
 	if !user.CheckPasswordHash(userHash.Password) {
 		return &response, status.Errorf(codes.Unauthenticated, "wrong password")
@@ -119,6 +119,7 @@ func (a AuthGophkeeperServer) Refresh(ctx context.Context, in *pb.RefreshRequest
 		if err == jwt.ErrSignatureInvalid {
 			return &response, status.Errorf(codes.Unauthenticated, "wrong password")
 		}
+		return &response, status.Errorf(codes.Unknown, err.Error())
 	}
 	if !tkn.Valid {
 		return &response, status.Errorf(codes.Unauthenticated, "wrong password")

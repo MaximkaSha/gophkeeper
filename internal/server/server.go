@@ -39,7 +39,7 @@ func (g GophkeeperServer) AddCipheredData(ctx context.Context, in *pb.AddCiphere
 func (g GophkeeperServer) GetCipheredDataForUserRequest(ctx context.Context, in *pb.GetCipheredDataRequest) (*pb.GetCipheredDataResponse, error) {
 	var response pb.GetCipheredDataResponse
 	user := models.CipheredData{}
-	user.FromProto(in.Data)
+	user.User = in.Email
 	data, err := g.DB.GetCipheredData(user)
 	if err != nil {
 		return &response, status.Errorf(codes.NotFound, `Error getting all ciphered data`)
@@ -53,9 +53,7 @@ func (g GophkeeperServer) GetCipheredDataForUserRequest(ctx context.Context, in 
 
 func (g GophkeeperServer) DelCipheredData(ctx context.Context, in *pb.DelCipheredDataRequest) (*pb.DelCiphereDataResponse, error) {
 	var response pb.DelCiphereDataResponse
-	data := models.CipheredData{}
-	data.FromProto(in.Data)
-	err := g.DB.DelCiphereData(data)
+	err := g.DB.DelCiphereData(in.Uuid)
 	if err != nil {
 		return &response, status.Errorf(codes.Unknown, `Error getting all ciphered data`)
 	}

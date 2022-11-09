@@ -22,7 +22,7 @@ type Storage struct {
 func NewStorage(dsn string) *Storage {
 	s := new(Storage)
 	s.ConnectionString = dsn
-	err := s.InitDB()
+	err := s.initDB()
 	if err != nil {
 		log.Panic("database error!")
 	}
@@ -30,7 +30,7 @@ func NewStorage(dsn string) *Storage {
 	return s
 }
 
-func (s *Storage) InitDB() error {
+func (s *Storage) initDB() error {
 	psqlconn := s.ConnectionString
 	var err error
 	s.DB, err = sql.Open("postgres", psqlconn)
@@ -171,9 +171,9 @@ func (s Storage) GetCipheredData(in models.CipheredData) ([]models.CipheredData,
 	return data, nil
 }
 
-func (s Storage) DelCiphereData(in models.CipheredData) error {
+func (s Storage) DelCiphereData(uuid string) error {
 	var query = `DELETE from ciphereddata WHERE uuid = $1`
-	_, err := s.DB.Exec(query, in.Id)
+	_, err := s.DB.Exec(query, uuid)
 	if err != nil {
 		log.Println(err)
 		return err

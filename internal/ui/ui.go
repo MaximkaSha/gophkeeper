@@ -184,7 +184,7 @@ func DrawEditFromTable(ctx context.Context, client client.Client, app *tview.App
 			}).
 			AddInputField("Tag: ", pass.Tag, 16, nil, func(text string) {
 				isChanged = true
-				pass.Login = text
+				pass.Tag = text
 			}).
 			AddButton("Add/Update", func() {
 				if isChanged {
