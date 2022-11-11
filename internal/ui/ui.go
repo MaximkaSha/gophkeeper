@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -31,9 +32,17 @@ var logo = `
   `
 
 func UI(ctx context.Context, client client.Client) {
+
+	f, err := os.OpenFile("testlogfile.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+
 	user := models.User{}
 	app := tview.NewApplication()
-	//box := tview.NewBox().SetBorder(true).SetTitle("GOPHKEEPER")
 	logo := tview.NewTextView().SetText(logo)
 	status := tview.NewTextView()
 	form := tview.NewForm().
@@ -74,7 +83,7 @@ func UI(ctx context.Context, client client.Client) {
 	AddItem(logo, 1, 1, 1, 3, 0, 0, false).
 	AddItem(form, 2, 1, 1, 3, 0, 0, true).
 	AddItem(status, 3, 1, 1, 3, 0, 0, false) */
-	err := app.SetRoot(grid2, true).Run()
+	err = app.SetRoot(grid2, true).Run()
 	if err != nil {
 		panic(err)
 	}
@@ -87,12 +96,36 @@ func DrawError(err error) {
 		SetText("Wrong CC Num or EXP").AddButtons([]string{"", "OK"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			if buttonLabel == "OK" {
+				app.Stop()
 			}
 		}).SetTextColor(tcell.ColorRed)
-	app.SetRoot(modal, true)
+	app.SetRoot(modal, true).Run()
 }
 
 func UpdateTable(ctx context.Context, client client.Client, table *tview.Table) *tview.Table {
+	for i := range client.AllData {
+		if client.AllData[i].Type == "PASSWORD" {
+			data := models.Password{}
+			json.Unmarshal(client.AllData[i].JData, &data)
+			client.AddDataToLocalStorage_OLd(ctx, data)
+		}
+		if client.AllData[i].Type == "CC" {
+			data := models.CreditCard{}
+			json.Unmarshal(client.AllData[i].JData, &data)
+			client.AddDataToLocalStorage_OLd(ctx, data)
+		}
+		if client.AllData[i].Type == "TEXT" {
+			data := models.Text{}
+			json.Unmarshal(client.AllData[i].JData, &data)
+			client.AddDataToLocalStorage_OLd(ctx, data)
+		}
+		if client.AllData[i].Type == "DATA" {
+			data := models.Data{}
+			json.Unmarshal(client.AllData[i].JData, &data)
+			client.AddDataToLocalStorage_OLd(ctx, data)
+		}
+	}
+
 	for i := 0; i < len(client.LocalStorage.PasswordStorage); i++ {
 		table.SetCellSimple(i+1, 0, client.LocalStorage.PasswordStorage[i].Tag)
 	}
@@ -226,7 +259,6 @@ func DrawEditFromTable(ctx context.Context, client client.Client, app *tview.App
 			loggedIn(ctx, client)
 		})
 	case 3:
-
 		path, err := os.Getwd()
 		if err != nil {
 			log.Fatal(err)
@@ -263,11 +295,12 @@ func loggedIn(ctx context.Context, client client.Client) {
 
 	status := tview.NewTextView().SetText("Ctrl + (A)dd,  (E)xit")
 	table := tview.NewTable()
+	table = UpdateTable(ctx, client, table)
 	table.SetCell(0, 0, tview.NewTableCell(fmt.Sprintf("Passwords(%v)", len(client.LocalStorage.PasswordStorage))).SetExpansion(1).SetAlign(tview.AlignCenter).SetBackgroundColor(tcell.Color100))
 	table.SetCell(0, 1, tview.NewTableCell(fmt.Sprintf("Credit Cards(%v)", len(client.LocalStorage.CCStorage))).SetExpansion(1).SetAlign(tview.AlignCenter).SetBackgroundColor(tcell.Color100))
 	table.SetCell(0, 2, tview.NewTableCell(fmt.Sprintf("Texts(%v)", len(client.LocalStorage.TextStorage))).SetExpansion(1).SetAlign(tview.AlignCenter).SetBackgroundColor(tcell.Color100))
 	table.SetCell(0, 3, tview.NewTableCell(fmt.Sprintf("Files(%v)", len(client.LocalStorage.DataStorage))).SetExpansion(1).SetAlign(tview.AlignCenter).SetBackgroundColor(tcell.Color100))
-	table = UpdateTable(ctx, client, table)
+
 	table.SetSelectable(true, true)
 
 	grid := tview.NewGrid().
@@ -338,7 +371,7 @@ func loggedIn(ctx context.Context, client client.Client) {
 							loggedIn(ctx, client)
 						})
 					app.SetRoot(formAddText, true)
-				case "DATA":
+				case "FILE":
 					data := models.Data{}
 					path := Tree()
 					formAddText := tview.NewForm().AddInputField("Path to file: ", path, len(path), func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { data.Data = []byte(text) }).
@@ -405,6 +438,7 @@ func Tree() string {
 
 	// Add the current directory to the root node.
 	add(root, rootDir)
+
 	path := ""
 	// If a directory was selected, open it.
 	tree.SetSelectedFunc(func(node *tview.TreeNode) {
@@ -430,7 +464,6 @@ func Tree() string {
 			node.SetExpanded(!node.IsExpanded())
 		}
 	})
-
 	if err := app.SetRoot(tree, true).Run(); err != nil {
 		panic(err)
 	}

@@ -146,11 +146,11 @@ func (s Storage) AddCipheredData(data models.CipheredData) error {
 	return nil
 }
 
-func (s Storage) GetCipheredData(in models.CipheredData) ([]models.CipheredData, error) {
+func (s Storage) GetCipheredData(email string) ([]models.CipheredData, error) {
 	var query = `SELECT * from ciphereddata where user_id = (SELECT id from users where email = $1)`
-	rows, err := s.DB.Query(query, in.User)
+	rows, err := s.DB.Query(query, email)
 	if err != nil {
-		log.Printf("Error %s when getting all cc", err)
+		log.Printf("Error %s when getting all data", err)
 		return []models.CipheredData{}, err
 	}
 	defer rows.Close()

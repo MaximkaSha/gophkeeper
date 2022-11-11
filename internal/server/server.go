@@ -12,7 +12,7 @@ import (
 )
 
 type GophkeeperServer struct {
-	DB *storage.Storage
+	DB models.Storager
 	pb.UnimplementedGophkeeperServer
 	Config *config.ServerConfig
 }
@@ -38,9 +38,7 @@ func (g GophkeeperServer) AddCipheredData(ctx context.Context, in *pb.AddCiphere
 
 func (g GophkeeperServer) GetCipheredDataForUserRequest(ctx context.Context, in *pb.GetCipheredDataRequest) (*pb.GetCipheredDataResponse, error) {
 	var response pb.GetCipheredDataResponse
-	user := models.CipheredData{}
-	user.User = in.Email
-	data, err := g.DB.GetCipheredData(user)
+	data, err := g.DB.GetCipheredData(in.Email)
 	if err != nil {
 		return &response, status.Errorf(codes.NotFound, `Error getting all ciphered data`)
 	}

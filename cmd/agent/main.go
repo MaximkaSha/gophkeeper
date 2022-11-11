@@ -2,18 +2,18 @@ package main
 
 import (
 	"context"
-	"encoding/json"
+	/*"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
 	"time"
 
 	"github.com/MaximkaSha/gophkeeper/internal/crypto"
-	"github.com/MaximkaSha/gophkeeper/internal/models"
-	pb "github.com/MaximkaSha/gophkeeper/internal/proto"
+	"github.com/MaximkaSha/gophkeeper/internal/models" */
+	//pb "github.com/MaximkaSha/gophkeeper/internal/proto"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	//"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -37,6 +37,7 @@ func (a *Auth) SetToken(token string, email string, secret []byte) {
 	a.Secret = secret
 }
 
+/*
 func main() {
 
 	auth := Auth{
@@ -110,7 +111,7 @@ func TestCipheredData(c pb.GophkeeperClient, a Auth) {
 			log.Fatal(err)
 		}
 	}
-	jData, err := c.GetCipheredDataForUserRequest(ctx, &pb.GetCipheredDataRequest{Data: &cData})
+	jData, err := c.GetCipheredDataForUserRequest(ctx, &pb.GetCipheredDataRequest{Email: a.Email})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -177,7 +178,6 @@ func TestUser(c pb.AuthGophkeeperClient) (string, string, []byte) {
 			log.Fatalf("Token not refreshed:%v ", err)
 		}
 		log.Println(newToken)
-	*/
-
-	return response.Token.Token, response.Token.Email, response.User.Secret
+			return response.Token.Token, response.Token.Email, response.User.Secret
 }
+*/

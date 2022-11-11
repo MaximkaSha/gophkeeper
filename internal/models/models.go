@@ -1,6 +1,10 @@
 package models
 
 import (
+	//"github.com/MaximkaSha/gophkeeper/internal/client"
+	"encoding/json"
+	"log"
+
 	pb "github.com/MaximkaSha/gophkeeper/internal/proto"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -30,9 +34,6 @@ func (u *CipheredData) ToProto() *pb.CipheredData {
 }
 
 func NewCipheredData(data []byte, email string, dataType string, uuidStr string) *pb.CipheredData {
-	if uuidStr == "" {
-		uuidStr = uuid.NewString()
-	}
 	return &pb.CipheredData{
 		Data:      data,
 		Type:      pb.CipheredData_Type(pb.CipheredData_Type_value[dataType]),
@@ -87,16 +88,67 @@ type Password struct {
 	ID       string `json:"id"`
 }
 
+func (d Password) GetData() []byte {
+	data, err := json.Marshal(d)
+	if err != nil {
+		log.Panic(err)
+	}
+	return data
+}
+func (d Password) GetID() string {
+	if d.ID == "" {
+		return uuid.NewString()
+	}
+	return d.ID
+}
+func (d Password) Type() string {
+	return "PASSWORD"
+}
+
 type Data struct {
 	Data []byte `json:"data"`
 	Tag  string `json:"tag"`
 	ID   string `json:"id"`
 }
 
+func (d Data) GetData() []byte {
+	data, err := json.Marshal(d)
+	if err != nil {
+		log.Panic(err)
+	}
+	return data
+}
+func (d Data) GetID() string {
+	if d.ID == "" {
+		return uuid.NewString()
+	}
+	return d.ID
+}
+func (d Data) Type() string {
+	return "DATA"
+}
+
 type Text struct {
 	Data string `json:"data"`
 	Tag  string `json:"tag"`
 	ID   string `json:"id"`
+}
+
+func (d Text) GetData() []byte {
+	data, err := json.Marshal(d)
+	if err != nil {
+		log.Panic(err)
+	}
+	return data
+}
+func (d Text) GetID() string {
+	if d.ID == "" {
+		return uuid.NewString()
+	}
+	return d.ID
+}
+func (d Text) Type() string {
+	return "TEXT"
 }
 
 type CreditCard struct {
@@ -108,7 +160,33 @@ type CreditCard struct {
 	ID      string `json:"id"`
 }
 
+func (d CreditCard) GetData() []byte {
+	data, err := json.Marshal(d)
+	if err != nil {
+		log.Panic(err)
+	}
+	return data
+}
+func (d CreditCard) GetID() string {
+	if d.ID == "" {
+		return uuid.NewString()
+	}
+	return d.ID
+}
+func (d CreditCard) Type() string {
+	return "CC"
+}
+
 type Storager interface {
 	AddUser(User) error
 	GetUser(User) (User, error)
+	AddCipheredData(CipheredData) error
+	GetCipheredData(string) ([]CipheredData, error)
+	DelCiphereData(string) error
+}
+
+type Dater interface {
+	GetData() []byte
+	GetID() string
+	Type() string
 }
