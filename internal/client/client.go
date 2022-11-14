@@ -172,7 +172,7 @@ type Client struct {
 	AllData []AllData
 }
 
-// Client constructor.
+//  NewClient Client constructor.
 // Build version and time must be passed as string.
 func NewClient(bv string, bt string) *Client {
 	auth := &Auth{

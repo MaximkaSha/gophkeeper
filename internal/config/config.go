@@ -35,7 +35,7 @@ func NewServerConfig() *ServerConfig {
 	}
 }
 
-// NewClientConfig - CLient config file
+// ClientConfig - CLient config file
 type ClientConfig struct {
 	// Host:port of server
 	Addr string
@@ -43,7 +43,7 @@ type ClientConfig struct {
 	CertFile string
 }
 
-// ClientConfig constructor.
+// NewClientConfig ClientConfig constructor.
 // Gets data from config file.
 func NewClientConfig() *ClientConfig {
 

@@ -14,7 +14,7 @@ import (
 var (
 	// BuildVersion from linker.
 	BuildVersion string = "N/A"
-	// BuildtTime from linker.
+	// BuildTime from linker.
 	BuildTime string = "N/A"
 )
 
