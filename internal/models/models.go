@@ -20,28 +20,28 @@ type CipheredData struct {
 	// Email of user which owns data.
 	User string
 	// Uuid of data.
-	Id string
+	ID string
 }
 
-// Function covert data from protobuf to CipheredData.
+// FromProto Function covert data from protobuf to CipheredData.
 func (u *CipheredData) FromProto(proto *pb.CipheredData) {
 	u.Data = proto.Data
-	u.Id = proto.Uuid
+	u.ID = proto.Uuid
 	u.Type = proto.Type.String()
 	u.User = proto.Useremail
 }
 
-// Function convert CipheredData to protobuff.
+// ToProto Function convert CipheredData to protobuff.
 func (u *CipheredData) ToProto() *pb.CipheredData {
 	return &pb.CipheredData{
 		Data:      u.Data,
 		Type:      pb.CipheredData_Type(pb.CipheredData_Type_value[u.Type]),
 		Useremail: u.User,
-		Uuid:      u.Id,
+		Uuid:      u.ID,
 	}
 }
 
-// Construct CipheredData by given values.
+// NewCipheredData Construct CipheredData by given values.
 func NewCipheredData(data []byte, email string, dataType string, uuidStr string) *pb.CipheredData {
 	return &pb.CipheredData{
 		Data:      data,
@@ -61,14 +61,14 @@ type User struct {
 	Secret []byte `json:"secret"`
 }
 
-// Covert protobuf User model to models.User.
+// FromProto Covert protobuf User model to models.User.
 func (u *User) FromProto(proto *pb.User) {
 	u.Email = proto.Email
 	u.Password = proto.Password
 	u.Secret = proto.Secret
 }
 
-// Convert models.User to protobuf.
+// ToProto Convert models.User to protobuf.
 func (u *User) ToProto() *pb.User {
 	return &pb.User{
 		Email:    u.Email,
@@ -77,7 +77,7 @@ func (u *User) ToProto() *pb.User {
 	}
 }
 
-// Hash users password (bcrypt).
+// HashPassword Hash users password (bcrypt).
 func (u *User) HashPassword() error {
 	passBytes, err := bcrypt.GenerateFromPassword([]byte(u.Password), 14)
 	if err == nil {
@@ -87,7 +87,7 @@ func (u *User) HashPassword() error {
 	return err
 }
 
-// Checks users hash.
+// CheckPasswordHash Checks users hash.
 func (u *User) CheckPasswordHash(hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(u.Password))
 	return err == nil
@@ -133,14 +133,14 @@ func (d Password) GetID() string {
 	return d.ID
 }
 
-// Set new uuid for data.
+// SetID new uuid for data.
 func (d *Password) SetID() {
 	if d.ID == "" {
 		d.ID = uuid.NewString()
 	}
 }
 
-// Return type of data.
+// Type Return type of data.
 func (d Password) Type() string {
 	return "PASSWORD"
 }
@@ -155,7 +155,7 @@ type Data struct {
 	ID string `json:"id"`
 }
 
-// Return marshled object.
+// GetData Return marshled object.
 func (d Data) GetData() []byte {
 	if d.ID == "" {
 		d.ID = uuid.NewString()
@@ -167,7 +167,7 @@ func (d Data) GetData() []byte {
 	return data
 }
 
-// Return uuid of data.
+// GetID Return uuid of data.
 func (d Data) GetID() string {
 	if d.ID == "" {
 		return uuid.NewString()
@@ -175,12 +175,12 @@ func (d Data) GetID() string {
 	return d.ID
 }
 
-// Return type of data.
+// Type Return type of data.
 func (d Data) Type() string {
 	return "DATA"
 }
 
-// Model for texts.
+// Text Model for texts.
 type Text struct {
 	// Data - string.
 	Data string `json:"data"`
@@ -190,7 +190,7 @@ type Text struct {
 	ID string `json:"id"`
 }
 
-// Returns marshled object.
+// GetData Returns marshled object.
 func (d Text) GetData() []byte {
 	if d.ID == "" {
 		d.ID = uuid.NewString()
@@ -202,7 +202,7 @@ func (d Text) GetData() []byte {
 	return data
 }
 
-// Returns uuid of data.
+// GetID Returns uuid of data.
 func (d Text) GetID() string {
 	if d.ID == "" {
 		return uuid.NewString()
@@ -210,12 +210,12 @@ func (d Text) GetID() string {
 	return d.ID
 }
 
-// Return type of data.
+// Type Return type of data.
 func (d Text) Type() string {
 	return "TEXT"
 }
 
-// Model of credit cards data.
+// CreditCard Model of credit cards data.
 type CreditCard struct {
 	// CardNum - string which contains CC Number.
 	CardNum string `json:"cardnum"`
@@ -231,7 +231,7 @@ type CreditCard struct {
 	ID string `json:"id"`
 }
 
-// Returns marshled object.
+// GetData Returns marshled object.
 func (d CreditCard) GetData() []byte {
 	if d.ID == "" {
 		d.ID = uuid.NewString()
@@ -243,7 +243,7 @@ func (d CreditCard) GetData() []byte {
 	return data
 }
 
-// Returns uuid of data.
+// GetID Returns uuid of data.
 func (d CreditCard) GetID() string {
 	if d.ID == "" {
 		return uuid.NewString()
@@ -251,12 +251,12 @@ func (d CreditCard) GetID() string {
 	return d.ID
 }
 
-// Return type of data.
+// Type Return type of data.
 func (d CreditCard) Type() string {
 	return "CC"
 }
 
-// Interface for database.
+// Storager Interface for database.
 type Storager interface {
 	AddUser(User) error
 	GetUser(User) (User, error)
@@ -265,7 +265,7 @@ type Storager interface {
 	DelCiphereData(string) error
 }
 
-// Interface for data converting.
+// Dater Interface for data converting.
 type Dater interface {
 	GetData() []byte
 	GetID() string

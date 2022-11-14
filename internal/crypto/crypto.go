@@ -10,7 +10,7 @@ type Crypto struct {
 	Crypto crypto.Cipher
 }
 
-// Constructor of Crypto.
+// NewCrypto - Constructor of Crypto.
 // Key size 32 byte.
 func NewCrypto(key []byte) *Crypto {
 	return &Crypto{
@@ -39,7 +39,7 @@ func (c *Crypto) Decrypt(data []byte) []byte {
 		c.Crypto.Decrypt(dst[i:c.Crypto.BlockSize()+i], data[i:c.Crypto.BlockSize()+i])
 	}
 	var counter int64
-	for i := len(dst) - 1; i > 0; i -= 1 {
+	for i := len(dst) - 1; i > 0; i-- {
 		if dst[i] == 0x00 {
 			counter++
 		} else {

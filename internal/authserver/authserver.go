@@ -1,4 +1,4 @@
-// Authserver package imlements authentification service for database services.
+// Package authserver  imlements authentification service for database services.
 package authserver
 
 import (

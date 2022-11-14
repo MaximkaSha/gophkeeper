@@ -12,8 +12,10 @@ import (
 )
 
 var (
+	// BuildVersion from linker.
 	BuildVersion string = "N/A"
-	BuildTime    string = "N/A"
+	// BuildtTime from linker.
+	BuildTime string = "N/A"
 )
 
 func main() {

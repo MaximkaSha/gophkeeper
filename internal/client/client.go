@@ -100,7 +100,7 @@ func (l *LocalStorage) AppendOrUpdate(v any) {
 
 }
 
-// Delete data from LocalStorage.
+// DelFromLocalStorageUI - Delete data from LocalStorage.
 func (l *LocalStorage) DelFromLocalStorageUI(v any) {
 	switch v := v.(type) {
 	case models.Data:
@@ -201,7 +201,7 @@ func NewClient(bv string, bt string) *Client {
 	}
 }
 
-// PrintStorage print to log current state of local storage.
+// PrinStorage print to log current state of local storage.
 // Debug purpose.
 func (c *Client) PrinStorage() {
 	log.Println("CC Storage: ", c.LocalStorage.CCStorage)
@@ -253,7 +253,7 @@ func (c *Client) UnmarshalProtoData(val *pb.CipheredData) (interface{}, error) {
 	return nil, errors.New("type unknown")
 }
 
-// UserReguster - registration function.
+// UserRegister - registration function.
 // models.User must be passed.
 // Return error if error occures when writing to DB (eg. User already exist).
 func (c *Client) UserRegister(ctx context.Context, user models.User) error {
@@ -289,7 +289,7 @@ func (c *Client) UserLogin(ctx context.Context, user models.User) error {
 	return nil
 }
 
-// RefreshtToken - refresh token every 45 seconds.
+// RefreshToken - refresh token every 45 seconds.
 func (c *Client) RefreshToken(ctx context.Context) {
 	tickerRefresh := time.NewTicker(time.Second * 45)
 	defer tickerRefresh.Stop()
@@ -324,13 +324,13 @@ func (c *Client) GetAllDataFromDB(ctx context.Context) error {
 	return nil
 }
 
-// Adds data to local storage for UI
+// AddDataToLocalStorageUI - Adds data to local storage for UI
 func (c *Client) AddDataToLocalStorageUI(ctx context.Context, v any) {
 	c.LocalStorage.AppendOrUpdate(v)
 
 }
 
-// Adds data to AllData storage.
+// AddDataToLocalStorage - Adds data to AllData storage.
 func (c *Client) AddDataToLocalStorage(ctx context.Context, data models.Dater) {
 
 	for i := range c.AllData {
@@ -346,7 +346,7 @@ func (c *Client) AddDataToLocalStorage(ctx context.Context, data models.Dater) {
 	})
 }
 
-// Del data from AllData storage by given uuid.
+// DelFromLocalStorage -Del data from AllData storage by given uuid.
 func (c *Client) DelFromLocalStorage(uuid string) {
 	if len(c.AllData) == 1 {
 		c.AllData = make([]AllData, 0)

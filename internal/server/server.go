@@ -1,4 +1,4 @@
-// Packager server implements gRPC server.
+// Package server implements gRPC server.
 package server
 
 import (
@@ -21,7 +21,7 @@ type GophkeeperServer struct {
 	Config *config.ServerConfig
 }
 
-// COnstructor of GophkeeperServer
+// NewGophkeeperServer COnstructor of GophkeeperServer
 func NewGophkeeperServer() GophkeeperServer {
 	config := config.NewServerConfig()
 	return GophkeeperServer{

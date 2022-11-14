@@ -147,7 +147,7 @@ func TestStorage_AddCipheredData(t *testing.T) {
 					Type: "CC",
 					Data: []byte("123"),
 					User: "test@test.com",
-					Id:   "1111-1111-111-11",
+					ID:   "1111-1111-111-11",
 				},
 			},
 		},
@@ -161,13 +161,13 @@ func TestStorage_AddCipheredData(t *testing.T) {
 			defer db.Close()
 			tt.s.DB = db
 
-			mock.ExpectExec("INSERT INTO").WithArgs(tt.args.data.Data, tt.args.data.Type, tt.args.data.User, tt.args.data.Id).WillReturnResult(sqlmock.NewResult(1, 1))
+			mock.ExpectExec("INSERT INTO").WithArgs(tt.args.data.Data, tt.args.data.Type, tt.args.data.User, tt.args.data.ID).WillReturnResult(sqlmock.NewResult(1, 1))
 			err = tt.s.AddCipheredData(tt.args.data)
 			require.NoError(t, err)
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
 			}
-			mock.ExpectExec("INSERT INTO").WithArgs(tt.args.data.Data, tt.args.data.Type, tt.args.data.User, tt.args.data.Id).WillReturnResult(sqlmock.NewResult(1, 1)).WillReturnError(errors.New("no data"))
+			mock.ExpectExec("INSERT INTO").WithArgs(tt.args.data.Data, tt.args.data.Type, tt.args.data.User, tt.args.data.ID).WillReturnResult(sqlmock.NewResult(1, 1)).WillReturnError(errors.New("no data"))
 			tt.args.data.Type = "no data"
 			err = tt.s.AddCipheredData(tt.args.data)
 			require.Error(t, err)

@@ -180,19 +180,19 @@ func TestClient_GetAllDataFromDB(t *testing.T) {
 					Type: "CC",
 					Data: []byte("testtesttesttest"),
 					User: "test@tst.com",
-					Id:   "111-111-1111",
+					ID:   "111-111-1111",
 				},
 				{
 					Type: "CC",
 					Data: []byte("testtesttesttest"),
 					User: "test@tst.com",
-					Id:   "222-111-1111",
+					ID:   "222-111-1111",
 				},
 				{
 					Type: "CC",
 					Data: []byte("testtesttesttest"),
 					User: "test@tst.com",
-					Id:   "444-111-1111",
+					ID:   "444-111-1111",
 				},
 			}, nil)
 			err = tt.c.GetAllDataFromDB(context.Background())

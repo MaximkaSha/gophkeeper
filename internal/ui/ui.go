@@ -1,3 +1,4 @@
+// Package ui - draws user interface.
 package ui
 
 import (
@@ -32,6 +33,7 @@ var logo = `
 ░╚═════╝░░╚════╝░╚═╝░░░░░╚═╝░░╚═╝╚═╝░░╚═╝╚══════╝╚══════╝╚═╝░░░░░╚══════╝╚═╝░░╚═╝    
   `
 
+// UI draws login screen.
 func UI(ctx context.Context, client client.Client) {
 
 	f, err := os.OpenFile("testlogfile.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -90,6 +92,7 @@ func UI(ctx context.Context, client client.Client) {
 	}
 }
 
+// DrawError - draws error for user.
 func DrawError(err error) {
 	app := tview.NewApplication()
 
@@ -103,6 +106,7 @@ func DrawError(err error) {
 	app.SetRoot(modal, true).Run()
 }
 
+// UpdateTable - updates data in table.
 func UpdateTable(ctx context.Context, c client.Client, table *tview.Table) *tview.Table {
 	c.LocalStorage.PasswordStorage = []models.Password{}
 	c.LocalStorage.CCStorage = []models.CreditCard{}
@@ -146,10 +150,13 @@ func UpdateTable(ctx context.Context, c client.Client, table *tview.Table) *tvie
 	return table
 }
 
+// CheckCCNum - luhn check of cc num.
 func CheckCCNum(textToCheck string) bool {
 	ccNum, _ := strconv.Atoi(textToCheck)
 	return luhn.Valid(ccNum)
 }
+
+// CheckCCExp - check if Exp contains / and integers.
 func CheckCCExp(textToCheck string) bool {
 	exp := strings.Split(textToCheck, "/")
 	if len(exp) < 2 {
@@ -164,6 +171,7 @@ func CheckCCExp(textToCheck string) bool {
 	return !(month < 12) || !(year < 70)
 }
 
+// DrawEditFromTable - draw edit table for data model.
 func DrawEditFromTable(ctx context.Context, client client.Client, app *tview.Application, grid *tview.Grid, row int, dType int) *tview.Form {
 	form := tview.NewForm()
 	switch dType {
@@ -412,6 +420,7 @@ func loggedIn(ctx context.Context, client client.Client) {
 	}
 }
 
+// Tree - draw file tree.
 func Tree() string {
 	app := tview.NewApplication()
 	rootDir := "."

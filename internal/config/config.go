@@ -3,7 +3,7 @@ package config
 
 import "github.com/spf13/viper"
 
-// Server configuration structure.
+// ServerConfig - Server configuration structure.
 type ServerConfig struct {
 	// Host:port of server.
 	Addr string
@@ -17,7 +17,7 @@ type ServerConfig struct {
 	JWTSecret string
 }
 
-// ServerConfig constructor.
+// NewServerConfig - ServerConfig constructor.
 // Gets data from config file.
 func NewServerConfig() *ServerConfig {
 
@@ -35,7 +35,7 @@ func NewServerConfig() *ServerConfig {
 	}
 }
 
-// CLient config file
+// NewClientConfig - CLient config file
 type ClientConfig struct {
 	// Host:port of server
 	Addr string

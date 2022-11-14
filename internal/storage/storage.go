@@ -11,6 +11,7 @@ import (
 	//"time"
 
 	"github.com/google/uuid"
+	// pq - driver for postgre
 	_ "github.com/lib/pq"
 
 	"github.com/MaximkaSha/gophkeeper/internal/models"
@@ -24,7 +25,7 @@ type Storage struct {
 	DB *sql.DB
 }
 
-// Constrctor of storage. Needs dsn.
+// NewStorage Constrctor of storage. Needs dsn.
 func NewStorage(dsn string) *Storage {
 	s := new(Storage)
 	s.ConnectionString = dsn
@@ -52,7 +53,7 @@ func (s *Storage) initDB() error {
 	return err
 }
 
-// Checks and print databse error.
+// CheckError Checks and print databse error.
 func CheckError(err error) {
 	if err != nil {
 		log.Printf("Database error: %s", err.Error())
@@ -118,7 +119,7 @@ func (s Storage) AddUser(user models.User) error {
 	return nil
 }
 
-// Generate user privite key.
+// GenSecretKey Generate user privite key.
 func (s Storage) GenSecretKey() (string, error) {
 	data := make([]byte, 32)
 	_, err := rand.Read(data)
@@ -148,10 +149,10 @@ func (s Storage) AddCipheredData(data models.CipheredData) error {
 		DO UPDATE SET
 		data = EXCLUDED.data,
 		type = EXCLUDED.type`
-	if data.Id == "" {
-		data.Id = uuid.NewString()
+	if data.ID == "" {
+		data.ID = uuid.NewString()
 	}
-	_, err := s.DB.Exec(query, data.Data, data.Type, data.User, data.Id)
+	_, err := s.DB.Exec(query, data.Data, data.Type, data.User, data.ID)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -172,7 +173,7 @@ func (s Storage) GetCipheredData(email string) ([]models.CipheredData, error) {
 	counter := 0
 	for rows.Next() {
 		model := models.CipheredData{}
-		if err := rows.Scan(&model.Data, &model.Type, &model.User, &model.Id); err != nil {
+		if err := rows.Scan(&model.Data, &model.Type, &model.User, &model.ID); err != nil {
 			log.Println(err)
 			return []models.CipheredData{}, err
 		}

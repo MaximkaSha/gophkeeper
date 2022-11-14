@@ -33,7 +33,7 @@ func TestGophkeeperServer_AddCipheredData(t *testing.T) {
 				Type: "CC",
 				Data: []byte("1"),
 				User: "test@test.com",
-				Id:   "111-111-111",
+				ID:   "111-111-111",
 			}
 			store := mockdb.NewMockStorager(ctrl)
 			store.EXPECT().AddCipheredData(gomock.Eq(data))
@@ -82,7 +82,7 @@ func TestGophkeeperServer_GetCipheredDataForUserRequest(t *testing.T) {
 				Type: "CC",
 				Data: []byte("1"),
 				User: "test@test.com",
-				Id:   "111-111-111",
+				ID:   "111-111-111",
 			}
 			store := mockdb.NewMockStorager(ctrl)
 			store.EXPECT().GetCipheredData(gomock.Eq(data.User)).Return([]models.CipheredData{
@@ -90,13 +90,13 @@ func TestGophkeeperServer_GetCipheredDataForUserRequest(t *testing.T) {
 					Type: "CC",
 					Data: []byte("1"),
 					User: "test@test.com",
-					Id:   "111-111-111",
+					ID:   "111-111-111",
 				},
 				{
 					Type: "CC",
 					Data: []byte("2"),
 					User: "test@test.com",
-					Id:   "222-322-222",
+					ID:   "222-322-222",
 				},
 			}, nil)
 			Server := GophkeeperServer{
@@ -146,10 +146,10 @@ func TestGophkeeperServer_DelCipheredData(t *testing.T) {
 				Type: "CC",
 				Data: []byte("1"),
 				User: "test@test.com",
-				Id:   "111-111-111",
+				ID:   "111-111-111",
 			}
 			store := mockdb.NewMockStorager(ctrl)
-			store.EXPECT().DelCiphereData(gomock.Eq(data.Id)).Return(nil)
+			store.EXPECT().DelCiphereData(gomock.Eq(data.ID)).Return(nil)
 			Server := GophkeeperServer{
 				DB: store,
 			}
@@ -168,12 +168,12 @@ func TestGophkeeperServer_DelCipheredData(t *testing.T) {
 			}
 			c := pb.NewGophkeeperClient(conn)
 			_, err = c.DelCipheredData(context.Background(), &pb.DelCipheredDataRequest{
-				Uuid: data.Id,
+				Uuid: data.ID,
 			})
 			require.NoError(t, err)
-			store.EXPECT().DelCiphereData(gomock.Eq(data.Id)).Return(errors.New("no data"))
+			store.EXPECT().DelCiphereData(gomock.Eq(data.ID)).Return(errors.New("no data"))
 			_, err = c.DelCipheredData(context.Background(), &pb.DelCipheredDataRequest{
-				Uuid: data.Id,
+				Uuid: data.ID,
 			})
 			require.Error(t, err)
 
