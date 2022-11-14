@@ -89,6 +89,9 @@ type Password struct {
 }
 
 func (d Password) GetData() []byte {
+	if d.ID == "" {
+		d.ID = uuid.NewString()
+	}
 	data, err := json.Marshal(d)
 	if err != nil {
 		log.Panic(err)
@@ -101,6 +104,12 @@ func (d Password) GetID() string {
 	}
 	return d.ID
 }
+
+func (d *Password) SetID() {
+	if d.ID == "" {
+		d.ID = uuid.NewString()
+	}
+}
 func (d Password) Type() string {
 	return "PASSWORD"
 }
@@ -112,6 +121,9 @@ type Data struct {
 }
 
 func (d Data) GetData() []byte {
+	if d.ID == "" {
+		d.ID = uuid.NewString()
+	}
 	data, err := json.Marshal(d)
 	if err != nil {
 		log.Panic(err)
@@ -135,6 +147,9 @@ type Text struct {
 }
 
 func (d Text) GetData() []byte {
+	if d.ID == "" {
+		d.ID = uuid.NewString()
+	}
 	data, err := json.Marshal(d)
 	if err != nil {
 		log.Panic(err)
@@ -161,6 +176,9 @@ type CreditCard struct {
 }
 
 func (d CreditCard) GetData() []byte {
+	if d.ID == "" {
+		d.ID = uuid.NewString()
+	}
 	data, err := json.Marshal(d)
 	if err != nil {
 		log.Panic(err)

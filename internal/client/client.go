@@ -87,7 +87,7 @@ func (l *LocalStorage) AppendOrUpdate(v any) {
 	}
 
 }
-func (l *LocalStorage) DelFromLocalStorage_Old(v any) {
+func (l *LocalStorage) DelFromLocalStorageUI(v any) {
 	switch v := v.(type) {
 	case models.Data:
 		for i := range l.DataStorage {
@@ -190,6 +190,7 @@ func (c *Client) UnmarshalProtoData(val *pb.CipheredData) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
+		data.ID = val.Uuid
 		return data, nil
 	case "TEXT":
 		data := models.Text{}
@@ -198,6 +199,7 @@ func (c *Client) UnmarshalProtoData(val *pb.CipheredData) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
+		data.ID = val.Uuid
 		return data, nil
 	case "CC":
 		data := models.CreditCard{}
@@ -206,6 +208,7 @@ func (c *Client) UnmarshalProtoData(val *pb.CipheredData) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
+		data.ID = val.Uuid
 		return data, nil
 	case "DATA":
 		data := models.Data{}
@@ -214,6 +217,7 @@ func (c *Client) UnmarshalProtoData(val *pb.CipheredData) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
+		data.ID = val.Uuid
 		return data, nil
 	}
 	return nil, errors.New("type unknown")
@@ -259,6 +263,7 @@ func (c *Client) RefreshToken(ctx context.Context) {
 		newToken, err := c.authClient.Refresh(ctx, &pb.RefreshRequest{Token: tokenOld})
 		if err != nil {
 			log.Println("Token not refreshed: ", err)
+			return
 		}
 		c.auth.Token = newToken.Token.Token
 	}
@@ -279,12 +284,13 @@ func (c *Client) GetAllDataFromDB(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) AddDataToLocalStorage_OLd(ctx context.Context, v any) {
+func (c *Client) AddDataToLocalStorageUI(ctx context.Context, v any) {
 	c.LocalStorage.AppendOrUpdate(v)
 
 }
 
 func (c *Client) AddDataToLocalStorage(ctx context.Context, data models.Dater) {
+
 	for i := range c.AllData {
 		if c.AllData[i].ID == data.GetID() {
 			c.AllData[i].JData = data.GetData()
@@ -299,10 +305,12 @@ func (c *Client) AddDataToLocalStorage(ctx context.Context, data models.Dater) {
 }
 
 func (c *Client) DelFromLocalStorage(uuid string) {
+	if len(c.AllData) == 1 {
+		c.AllData = make([]AllData, 0)
+	}
 	for i := range c.AllData {
 		if c.AllData[i].ID == uuid {
-			ret := make([]AllData, 0)
-			c.AllData = append(ret, c.AllData[:i]...)
+			c.AllData = append(c.AllData[:i], c.AllData[i+1:]...)
 			return
 		}
 	}
@@ -391,12 +399,12 @@ func (c *Client) AddData(ctx context.Context, data models.Dater) error {
 	return errors.New("unknown type")
 } */
 
-func (c *Client) DelData(ctx context.Context, data models.Dater) error {
-	_, err := c.serverClient.DelCipheredData(ctx, &pb.DelCipheredDataRequest{Uuid: data.GetID()})
+func (c *Client) DelData(ctx context.Context, uuid string) error {
+	_, err := c.serverClient.DelCipheredData(ctx, &pb.DelCipheredDataRequest{Uuid: uuid})
 	if err != nil {
 		return err
 	}
-	c.DelFromLocalStorage(data.GetID())
+	c.DelFromLocalStorage(uuid)
 	return nil
 }
 

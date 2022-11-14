@@ -1,12 +1,13 @@
 package storage
 
 import (
-	"context"
+	//"context"
 	"crypto/rand"
 	"database/sql"
 	"errors"
 	"log"
-	"time"
+
+	//"time"
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
@@ -37,10 +38,10 @@ func (s *Storage) initDB() error {
 	CheckError(err)
 	err = s.DB.Ping()
 	CheckError(err)
-	err = s.CreateDBIfNotExist()
+	/*err = s.CreateDBIfNotExist()
 	CheckError(err)
 	err = s.CreateTableIfNotExist()
-	CheckError(err)
+	CheckError(err) */
 
 	return err
 }
@@ -51,6 +52,7 @@ func CheckError(err error) {
 	}
 }
 
+/*
 func (s Storage) CreateDBIfNotExist() error {
 	var query = `SELECT 'CREATE DATABASE gophkeeper'
 	WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname  = 'gophkeeper')`
@@ -89,6 +91,7 @@ CREATE TABLE IF NOT EXISTS public.ciphereddata
 
 	return err
 }
+*/
 
 // User group.
 func (s Storage) AddUser(user models.User) error {

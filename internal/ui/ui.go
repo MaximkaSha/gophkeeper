@@ -17,6 +17,7 @@ import (
 	"github.com/MaximkaSha/gophkeeper/internal/client"
 	"github.com/MaximkaSha/gophkeeper/internal/models"
 	"github.com/gdamore/tcell/v2"
+	"github.com/google/uuid"
 	"github.com/rivo/tview"
 	"github.com/theplant/luhn"
 )
@@ -102,41 +103,45 @@ func DrawError(err error) {
 	app.SetRoot(modal, true).Run()
 }
 
-func UpdateTable(ctx context.Context, client client.Client, table *tview.Table) *tview.Table {
-	for i := range client.AllData {
-		if client.AllData[i].Type == "PASSWORD" {
+func UpdateTable(ctx context.Context, c client.Client, table *tview.Table) *tview.Table {
+	c.LocalStorage.PasswordStorage = []models.Password{}
+	c.LocalStorage.CCStorage = []models.CreditCard{}
+	c.LocalStorage.DataStorage = []models.Data{}
+	c.LocalStorage.TextStorage = []models.Text{}
+	for i := range c.AllData {
+		if c.AllData[i].Type == "PASSWORD" {
 			data := models.Password{}
-			json.Unmarshal(client.AllData[i].JData, &data)
-			client.AddDataToLocalStorage_OLd(ctx, data)
+			json.Unmarshal(c.AllData[i].JData, &data)
+			log.Println("Alldata ", data)
+			c.AddDataToLocalStorageUI(ctx, data)
 		}
-		if client.AllData[i].Type == "CC" {
+		if c.AllData[i].Type == "CC" {
 			data := models.CreditCard{}
-			json.Unmarshal(client.AllData[i].JData, &data)
-			client.AddDataToLocalStorage_OLd(ctx, data)
+			json.Unmarshal(c.AllData[i].JData, &data)
+			c.AddDataToLocalStorageUI(ctx, data)
 		}
-		if client.AllData[i].Type == "TEXT" {
+		if c.AllData[i].Type == "TEXT" {
 			data := models.Text{}
-			json.Unmarshal(client.AllData[i].JData, &data)
-			client.AddDataToLocalStorage_OLd(ctx, data)
+			json.Unmarshal(c.AllData[i].JData, &data)
+			c.AddDataToLocalStorageUI(ctx, data)
 		}
-		if client.AllData[i].Type == "DATA" {
+		if c.AllData[i].Type == "DATA" {
 			data := models.Data{}
-			json.Unmarshal(client.AllData[i].JData, &data)
-			client.AddDataToLocalStorage_OLd(ctx, data)
+			json.Unmarshal(c.AllData[i].JData, &data)
+			c.AddDataToLocalStorageUI(ctx, data)
 		}
 	}
-
-	for i := 0; i < len(client.LocalStorage.PasswordStorage); i++ {
-		table.SetCellSimple(i+1, 0, client.LocalStorage.PasswordStorage[i].Tag)
+	for i := 0; i < len(c.LocalStorage.PasswordStorage); i++ {
+		table.SetCellSimple(i+1, 0, c.LocalStorage.PasswordStorage[i].Tag)
 	}
-	for i := 0; i < len(client.LocalStorage.CCStorage); i++ {
-		table.SetCellSimple(i+1, 1, client.LocalStorage.CCStorage[i].Tag)
+	for i := 0; i < len(c.LocalStorage.CCStorage); i++ {
+		table.SetCellSimple(i+1, 1, c.LocalStorage.CCStorage[i].Tag)
 	}
-	for i := 0; i < len(client.LocalStorage.TextStorage); i++ {
-		table.SetCellSimple(i+1, 2, client.LocalStorage.TextStorage[i].Tag)
+	for i := 0; i < len(c.LocalStorage.TextStorage); i++ {
+		table.SetCellSimple(i+1, 2, c.LocalStorage.TextStorage[i].Tag)
 	}
-	for i := 0; i < len(client.LocalStorage.DataStorage); i++ {
-		table.SetCellSimple(i+1, 3, client.LocalStorage.DataStorage[i].Tag)
+	for i := 0; i < len(c.LocalStorage.DataStorage); i++ {
+		table.SetCellSimple(i+1, 3, c.LocalStorage.DataStorage[i].Tag)
 	}
 	return table
 }
@@ -192,6 +197,7 @@ func DrawEditFromTable(ctx context.Context, client client.Client, app *tview.App
 						app.Stop()
 						loggedIn(ctx, client)
 					}
+
 					err := client.AddData(ctx, cc)
 					if err != nil {
 						DrawError(err)
@@ -200,7 +206,7 @@ func DrawEditFromTable(ctx context.Context, client client.Client, app *tview.App
 				app.Stop()
 				loggedIn(ctx, client)
 			}).AddButton("Del", func() {
-			client.DelData(ctx, cc)
+			client.DelData(ctx, cc.ID)
 			app.Stop()
 			loggedIn(ctx, client)
 		})
@@ -229,7 +235,8 @@ func DrawEditFromTable(ctx context.Context, client client.Client, app *tview.App
 				app.Stop()
 				loggedIn(ctx, client)
 			}).AddButton("Del", func() {
-			client.DelData(ctx, pass)
+			log.Println("Del id", pass.ID)
+			client.DelData(ctx, pass.ID)
 			app.Stop()
 			loggedIn(ctx, client)
 		})
@@ -254,7 +261,7 @@ func DrawEditFromTable(ctx context.Context, client client.Client, app *tview.App
 				app.Stop()
 				loggedIn(ctx, client)
 			}).AddButton("Del", func() {
-			client.DelData(ctx, txt)
+			client.DelData(ctx, txt.ID)
 			app.Stop()
 			loggedIn(ctx, client)
 		})
@@ -276,7 +283,7 @@ func DrawEditFromTable(ctx context.Context, client client.Client, app *tview.App
 				app.Stop()
 				loggedIn(ctx, client)
 			}).AddButton("Del", func() {
-			client.DelData(ctx, data)
+			client.DelData(ctx, data.ID)
 			app.Stop()
 			loggedIn(ctx, client)
 		}).AddButton("Exit", func() { app.Stop() })
@@ -338,8 +345,8 @@ func loggedIn(ctx context.Context, client client.Client) {
 						AddInputField("Password: ", "", 16, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { password.Password = text }).
 						AddInputField("Tag: ", "", 10, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { password.Tag = text }).
 						AddButton("Add/Update", func() {
+							password.ID = uuid.NewString()
 							client.AddData(ctx, password)
-							//	app.SetRoot(grid, true)
 							app.Stop()
 							loggedIn(ctx, client)
 						})
@@ -355,6 +362,7 @@ func loggedIn(ctx context.Context, client client.Client) {
 							if !CheckCCNum(cc.CardNum) || !CheckCCExp(cc.Exp) {
 								app.Stop()
 							}
+							cc.ID = uuid.NewString()
 							client.AddData(ctx, cc)
 							app.Stop()
 							loggedIn(ctx, client)
@@ -365,6 +373,7 @@ func loggedIn(ctx context.Context, client client.Client) {
 					formAddText := tview.NewForm().AddInputField("Text: ", "", 100, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { txt.Data = text }).
 						AddInputField("Tag: ", "", 10, func(textToCheck string, lastChar rune) bool { return textToCheck != "" }, func(text string) { txt.Tag = text }).
 						AddButton("Add/Update", func() {
+							txt.ID = uuid.NewString()
 							client.AddData(ctx, txt)
 							//	app.SetRoot(grid, true)
 							app.Stop()
@@ -382,6 +391,7 @@ func loggedIn(ctx context.Context, client client.Client) {
 								log.Fatal(err)
 							}
 							data.Data = b
+							data.ID = uuid.NewString()
 							client.AddData(ctx, data)
 							app.Stop()
 							loggedIn(ctx, client)
@@ -413,7 +423,6 @@ func Tree() string {
 	tree := tview.NewTreeView().
 		SetRoot(root).
 		SetCurrentNode(root)
-
 	// A helper function which adds the files and directories of the given path
 	// to the given target node.
 	add := func(target *tview.TreeNode, path string) {

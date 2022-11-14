@@ -3,6 +3,8 @@ module github.com/MaximkaSha/gophkeeper
 go 1.18
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/ddulesov/gogost v1.0.0 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
@@ -10,6 +12,7 @@ require (
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/gdamore/tcell v1.1.0 // indirect
 	github.com/gdamore/tcell/v2 v2.5.3 // indirect
+	github.com/golang/mock v1.4.4 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
@@ -23,6 +26,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/tview v0.0.0-20221029100920-c4a7e501810d // indirect
 	github.com/rivo/uniseg v0.4.2 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
@@ -30,13 +34,17 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.13.0 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/theplant/luhn v0.0.0-20170224032821-81a1a381387a // indirect
 	golang.org/x/crypto v0.1.0 // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.1.0 // indirect
 	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/term v0.1.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/tools v0.1.12 // indirect
 	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
 	google.golang.org/grpc v1.50.1 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect

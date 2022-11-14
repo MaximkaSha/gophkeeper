@@ -17,8 +17,12 @@ import (
 type AuthGophkeeperServer struct {
 	jwtKey []byte
 	config *config.ServerConfig
-	DB     *storage.Storage
+	DB     models.Storager
 	pb.UnimplementedAuthGophkeeperServer
+}
+
+func (a *AuthGophkeeperServer) SetJWTKey(key string) {
+	a.jwtKey = []byte(key)
 }
 
 func NewAuthGophkeeperServer() AuthGophkeeperServer {
@@ -103,7 +107,7 @@ func (a AuthGophkeeperServer) parseToken(token string) error {
 		}
 	}
 	if !tkn.Valid {
-		status.Error(codes.Unauthenticated, "wrong token")
+		return status.Error(codes.Unauthenticated, "wrong token")
 	}
 
 	return nil
