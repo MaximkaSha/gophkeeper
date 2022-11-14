@@ -1,3 +1,4 @@
+// Package storage implements function to work with postgres sql.
 package storage
 
 import (
@@ -15,11 +16,15 @@ import (
 	"github.com/MaximkaSha/gophkeeper/internal/models"
 )
 
+// Storage class.
 type Storage struct {
+	// DSN.
 	ConnectionString string
-	DB               *sql.DB
+	// DB handler.
+	DB *sql.DB
 }
 
+// Constrctor of storage. Needs dsn.
 func NewStorage(dsn string) *Storage {
 	s := new(Storage)
 	s.ConnectionString = dsn
@@ -31,6 +36,7 @@ func NewStorage(dsn string) *Storage {
 	return s
 }
 
+// initDB - initialize database.
 func (s *Storage) initDB() error {
 	psqlconn := s.ConnectionString
 	var err error
@@ -46,6 +52,7 @@ func (s *Storage) initDB() error {
 	return err
 }
 
+// Checks and print databse error.
 func CheckError(err error) {
 	if err != nil {
 		log.Printf("Database error: %s", err.Error())
@@ -93,7 +100,7 @@ CREATE TABLE IF NOT EXISTS public.ciphereddata
 }
 */
 
-// User group.
+// AddUser - insert user to database.
 func (s Storage) AddUser(user models.User) error {
 	var query = `
 	INSERT INTO users (email,password,secret)
@@ -111,6 +118,7 @@ func (s Storage) AddUser(user models.User) error {
 	return nil
 }
 
+// Generate user privite key.
 func (s Storage) GenSecretKey() (string, error) {
 	data := make([]byte, 32)
 	_, err := rand.Read(data)
@@ -120,6 +128,7 @@ func (s Storage) GenSecretKey() (string, error) {
 	return string(data), nil
 }
 
+// GetUser - select user model from database.
 func (s Storage) GetUser(user models.User) (models.User, error) {
 	var query = `SELECT email,password,secret from users where email = $1`
 	data := models.User{}
@@ -131,6 +140,7 @@ func (s Storage) GetUser(user models.User) (models.User, error) {
 	return data, nil
 }
 
+// AddCipheredData - insert ciphered data to database.
 func (s Storage) AddCipheredData(data models.CipheredData) error {
 	var query = `INSERT INTO ciphereddata (data, type, user_id, uuid)
 		VALUES ($1, $2, (SELECT id from users where email = $3), $4)
@@ -149,6 +159,7 @@ func (s Storage) AddCipheredData(data models.CipheredData) error {
 	return nil
 }
 
+// GetCipheredData - returns all users data from database by given user.
 func (s Storage) GetCipheredData(email string) ([]models.CipheredData, error) {
 	var query = `SELECT * from ciphereddata where user_id = (SELECT id from users where email = $1)`
 	rows, err := s.DB.Query(query, email)
@@ -174,6 +185,7 @@ func (s Storage) GetCipheredData(email string) ([]models.CipheredData, error) {
 	return data, nil
 }
 
+// DelCiphereData - delete user data from database by given uuid.
 func (s Storage) DelCiphereData(uuid string) error {
 	var query = `DELETE from ciphereddata WHERE uuid = $1`
 	_, err := s.DB.Exec(query, uuid)

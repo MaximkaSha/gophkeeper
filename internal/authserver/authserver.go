@@ -1,3 +1,4 @@
+// Authserver package imlements authentification service for database services.
 package authserver
 
 import (
@@ -14,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// AuthGophkeeperServer - main structure which keeps JWT key, configuration, DB interface.
 type AuthGophkeeperServer struct {
 	jwtKey []byte
 	config *config.ServerConfig
@@ -21,10 +23,13 @@ type AuthGophkeeperServer struct {
 	pb.UnimplementedAuthGophkeeperServer
 }
 
+// SetJWTKey - sets JWT key
 func (a *AuthGophkeeperServer) SetJWTKey(key string) {
 	a.jwtKey = []byte(key)
 }
 
+// NewAuthGophkeeperServer - constructor for AuthGophkeeperServer object.
+// Read the config file and return new AuthGophkeeperServer with configured parametrs.
 func NewAuthGophkeeperServer() AuthGophkeeperServer {
 	config := config.NewServerConfig()
 	return AuthGophkeeperServer{
@@ -34,11 +39,14 @@ func NewAuthGophkeeperServer() AuthGophkeeperServer {
 	}
 }
 
+// Claims - struct of JWT claim.
 type Claims struct {
 	Email string `json:"email"`
 	jwt.StandardClaims
 }
 
+// UserRegister  implements gRPC  user registration endpoint on server.
+// If all ok it will return empty response and nil error. If error happens it wil return error.
 func (a AuthGophkeeperServer) UserRegister(ctx context.Context, in *pb.UserRegisterRequest) (*pb.UserRegisterResponse, error) {
 
 	var response pb.UserRegisterResponse
@@ -51,6 +59,9 @@ func (a AuthGophkeeperServer) UserRegister(ctx context.Context, in *pb.UserRegis
 	return &response, nil
 }
 
+// JWTClain function returns new token and expirastion time for given user credentials.
+// New token signed by JWTKey from config.
+// Token ttl 1 minute.
 func (a AuthGophkeeperServer) JWTClain(creds models.User) (string, int64, error) {
 
 	expirationTime := time.Now().Add(1 * time.Minute)
@@ -66,6 +77,8 @@ func (a AuthGophkeeperServer) JWTClain(creds models.User) (string, int64, error)
 	return tokenString, expirationTime.Unix(), err
 }
 
+// UserLogin function implements user login endpoint.
+// If user creds ok returns JWT token which must be used to access privite API.
 func (a AuthGophkeeperServer) UserLogin(ctx context.Context, in *pb.UserLoginRequest) (*pb.UserLoginResponse, error) {
 	var response pb.UserLoginResponse
 	user := models.User{}
@@ -92,10 +105,12 @@ func (a AuthGophkeeperServer) UserLogin(ctx context.Context, in *pb.UserLoginReq
 	return &response, nil
 }
 
+// AuthFuncOverride overrides auth  middleware call, to keep Register and Login endpoints public.
 func (a AuthGophkeeperServer) AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error) {
 	return ctx, nil
 }
 
+// parseToken function checks sing and ttl of given token.
 func (a AuthGophkeeperServer) parseToken(token string) error {
 	claims := &Claims{}
 	tkn, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
@@ -113,6 +128,8 @@ func (a AuthGophkeeperServer) parseToken(token string) error {
 	return nil
 }
 
+// Refresh endpoint implementation.
+// This endpoint use to refresh user token.
 func (a AuthGophkeeperServer) Refresh(ctx context.Context, in *pb.RefreshRequest) (*pb.RefreshResponse, error) {
 	var response pb.RefreshResponse
 	claims := &Claims{}

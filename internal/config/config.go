@@ -1,15 +1,24 @@
+// Package config manage server and client configurations.
 package config
 
 import "github.com/spf13/viper"
 
+// Server configuration structure.
 type ServerConfig struct {
-	Addr      string
-	DSN       string
-	CertFile  string
-	CertKey   string
+	// Host:port of server.
+	Addr string
+	// DSN of database.
+	DSN string
+	// Path to certificate file.
+	CertFile string
+	// Path to certificate key file.
+	CertKey string
+	// JWT key string.
 	JWTSecret string
 }
 
+// ServerConfig constructor.
+// Gets data from config file.
 func NewServerConfig() *ServerConfig {
 
 	viper.AddConfigPath("./")
@@ -26,11 +35,16 @@ func NewServerConfig() *ServerConfig {
 	}
 }
 
+// CLient config file
 type ClientConfig struct {
-	Addr     string
+	// Host:port of server
+	Addr string
+	// Path to certificate file.
 	CertFile string
 }
 
+// ClientConfig constructor.
+// Gets data from config file.
 func NewClientConfig() *ClientConfig {
 
 	viper.AddConfigPath("./")

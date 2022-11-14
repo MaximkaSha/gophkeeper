@@ -1,3 +1,6 @@
+// Package server is backend for the client.
+// It implements gRPC endpoints and DB handling.
+// Configured via json file.
 package main
 
 import (

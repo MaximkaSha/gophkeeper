@@ -1,3 +1,4 @@
+// Package client implements gRPC client.
 package client
 
 import (
@@ -17,18 +18,26 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+// UnaryAuthClientInterceptor - auth middleware. Adds authorization header to each client request.
 func (a *Auth) UnaryAuthClientInterceptor(ctx context.Context, method string, req interface{}, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "bearer "+a.Token)
 	return invoker(ctx, method, req, reply, cc, opts...)
 }
 
+// Auth structure used to keep users auth info.
 type Auth struct {
-	Token  string
-	Email  string
-	Hash   string
+	// JWT Token.
+	Token string
+	// User email.
+	Email string
+	// bcrypt hash of user's password.
+	Hash string
+	// Personal user key to crypt data.
 	Secret []byte
 }
 
+// LocalStorage struct used to keep models data for UI.
+// This structed used to keep work with UI tables simple.
 type LocalStorage struct {
 	DataStorage     []models.Data
 	TextStorage     []models.Text
@@ -36,12 +45,15 @@ type LocalStorage struct {
 	PasswordStorage []models.Password
 }
 
+// AllData structure keeps all user data in one place.
+// This is used to keep user data returned from server.
 type AllData struct {
 	ID    string
 	JData []byte
 	Type  string
 }
 
+// AppendOrUpdate func append data to localstorage for UI.
 func (l *LocalStorage) AppendOrUpdate(v any) {
 	switch v := v.(type) {
 	case models.Data:
@@ -87,6 +99,8 @@ func (l *LocalStorage) AppendOrUpdate(v any) {
 	}
 
 }
+
+// Delete data from LocalStorage.
 func (l *LocalStorage) DelFromLocalStorageUI(v any) {
 	switch v := v.(type) {
 	case models.Data:
@@ -125,28 +139,41 @@ func (l *LocalStorage) DelFromLocalStorageUI(v any) {
 
 }
 
+// NewLocalStorage - LocalStorage constructor.
 func NewLocalStorage() *LocalStorage {
 	return &LocalStorage{
-		DataStorage:     []models.Data{},
-		TextStorage:     []models.Text{},
-		CCStorage:       []models.CreditCard{},
+		// Slice of files model.
+		DataStorage: []models.Data{},
+		// Slice of texts model.
+		TextStorage: []models.Text{},
+		// Slice of cc model.
+		CCStorage: []models.CreditCard{},
+		// Slice of password model.
 		PasswordStorage: []models.Password{},
 	}
 }
 
+// Client struct main structure of client app.
 type Client struct {
 	authClient   pb.AuthGophkeeperClient
 	serverClient pb.GophkeeperClient
 	crypto       crypto.Crypto
 	currentUser  models.User
 	auth         *Auth
+	// LocalStorage for UI.
 	LocalStorage *LocalStorage
-	Config       *config.ClientConfig
+	// Configuration data.
+	Config *config.ClientConfig
+	// Build version from linker.
 	BuildVersion string
-	BuildTime    string
-	AllData      []AllData
+	// Build time from linker.
+	BuildTime string
+	// All data slice.
+	AllData []AllData
 }
 
+// Client constructor.
+// Build version and time must be passed as string.
 func NewClient(bv string, bt string) *Client {
 	auth := &Auth{
 		Token: "",
@@ -174,6 +201,8 @@ func NewClient(bv string, bt string) *Client {
 	}
 }
 
+// PrintStorage print to log current state of local storage.
+// Debug purpose.
 func (c *Client) PrinStorage() {
 	log.Println("CC Storage: ", c.LocalStorage.CCStorage)
 	log.Println("Password Storage: ", c.LocalStorage.PasswordStorage)
@@ -181,6 +210,7 @@ func (c *Client) PrinStorage() {
 	log.Println("Text Storage: ", c.LocalStorage.TextStorage)
 }
 
+// UnmarshalProtoData function decrypt and unmarshal data from protobuf to models.
 func (c *Client) UnmarshalProtoData(val *pb.CipheredData) (interface{}, error) {
 	switch val.Type.String() {
 	case "PASSWORD":
@@ -223,6 +253,9 @@ func (c *Client) UnmarshalProtoData(val *pb.CipheredData) (interface{}, error) {
 	return nil, errors.New("type unknown")
 }
 
+// UserReguster - registration function.
+// models.User must be passed.
+// Return error if error occures when writing to DB (eg. User already exist).
 func (c *Client) UserRegister(ctx context.Context, user models.User) error {
 	err := user.HashPassword()
 	if err != nil {
@@ -236,6 +269,10 @@ func (c *Client) UserRegister(ctx context.Context, user models.User) error {
 	return nil
 }
 
+// UserLogin - login function.
+// models.User must be passed.
+// Return error if error occures when writing to DB (eg. Bad pwd).
+// If all ok  jwt token and privite key will placed to Client object.
 func (c *Client) UserLogin(ctx context.Context, user models.User) error {
 	userProto := user.ToProto()
 	response, err := c.authClient.UserLogin(ctx, &pb.UserLoginRequest{User: userProto})
@@ -252,6 +289,7 @@ func (c *Client) UserLogin(ctx context.Context, user models.User) error {
 	return nil
 }
 
+// RefreshtToken - refresh token every 45 seconds.
 func (c *Client) RefreshToken(ctx context.Context) {
 	tickerRefresh := time.NewTicker(time.Second * 45)
 	defer tickerRefresh.Stop()
@@ -269,6 +307,8 @@ func (c *Client) RefreshToken(ctx context.Context) {
 	}
 }
 
+// GetAllDataFromDB - ask server for all users data in DB.
+// Data will be writen to AllData slice.
 func (c *Client) GetAllDataFromDB(ctx context.Context) error {
 	jData, err := c.serverClient.GetCipheredDataForUserRequest(ctx, &pb.GetCipheredDataRequest{Email: c.currentUser.Email})
 	if err != nil {
@@ -284,11 +324,13 @@ func (c *Client) GetAllDataFromDB(ctx context.Context) error {
 	return nil
 }
 
+// Adds data to local storage for UI
 func (c *Client) AddDataToLocalStorageUI(ctx context.Context, v any) {
 	c.LocalStorage.AppendOrUpdate(v)
 
 }
 
+// Adds data to AllData storage.
 func (c *Client) AddDataToLocalStorage(ctx context.Context, data models.Dater) {
 
 	for i := range c.AllData {
@@ -304,6 +346,7 @@ func (c *Client) AddDataToLocalStorage(ctx context.Context, data models.Dater) {
 	})
 }
 
+// Del data from AllData storage by given uuid.
 func (c *Client) DelFromLocalStorage(uuid string) {
 	if len(c.AllData) == 1 {
 		c.AllData = make([]AllData, 0)
@@ -315,6 +358,8 @@ func (c *Client) DelFromLocalStorage(uuid string) {
 		}
 	}
 }
+
+// AddData - encrypt  and push data to server.
 func (c *Client) AddData(ctx context.Context, data models.Dater) error {
 	cData := c.crypto.Encrypt(data.GetData())
 	protoData := models.NewCipheredData(cData, c.currentUser.Email, data.Type(), data.GetID())
@@ -399,6 +444,7 @@ func (c *Client) AddData(ctx context.Context, data models.Dater) error {
 	return errors.New("unknown type")
 } */
 
+// DelData - delete data from server and local storage by given uuid.
 func (c *Client) DelData(ctx context.Context, uuid string) error {
 	_, err := c.serverClient.DelCipheredData(ctx, &pb.DelCipheredDataRequest{Uuid: uuid})
 	if err != nil {

@@ -1,3 +1,7 @@
+// Package Client is main package of the app.
+// It implements TUI for user inputs and connection to the servers endpoints.
+// Configuration made via json file in root directory.
+// Certificate and server adress is mandatory.
 package main
 
 import (

@@ -1,3 +1,4 @@
+// Package models implements all data models used by server and client.
 package models
 
 import (
@@ -10,13 +11,19 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// CipheredData describes ciphered data of all given data types.
 type CipheredData struct {
+	// Type of data (PASSWORD, CC, TEXT, DATA).
 	Type string
+	// Marshled and ciphered data.
 	Data []byte
+	// Email of user which owns data.
 	User string
-	Id   string
+	// Uuid of data.
+	Id string
 }
 
+// Function covert data from protobuf to CipheredData.
 func (u *CipheredData) FromProto(proto *pb.CipheredData) {
 	u.Data = proto.Data
 	u.Id = proto.Uuid
@@ -24,6 +31,7 @@ func (u *CipheredData) FromProto(proto *pb.CipheredData) {
 	u.User = proto.Useremail
 }
 
+// Function convert CipheredData to protobuff.
 func (u *CipheredData) ToProto() *pb.CipheredData {
 	return &pb.CipheredData{
 		Data:      u.Data,
@@ -33,6 +41,7 @@ func (u *CipheredData) ToProto() *pb.CipheredData {
 	}
 }
 
+// Construct CipheredData by given values.
 func NewCipheredData(data []byte, email string, dataType string, uuidStr string) *pb.CipheredData {
 	return &pb.CipheredData{
 		Data:      data,
@@ -42,18 +51,24 @@ func NewCipheredData(data []byte, email string, dataType string, uuidStr string)
 	}
 }
 
+// User struct.
 type User struct {
-	Email    string `json:"email"`
+	//Email of user.
+	Email string `json:"email"`
+	// User's password.
 	Password string `json:"password"`
-	Secret   []byte `json:"secret"`
+	// User's privite key.
+	Secret []byte `json:"secret"`
 }
 
+// Covert protobuf User model to models.User.
 func (u *User) FromProto(proto *pb.User) {
 	u.Email = proto.Email
 	u.Password = proto.Password
 	u.Secret = proto.Secret
 }
 
+// Convert models.User to protobuf.
 func (u *User) ToProto() *pb.User {
 	return &pb.User{
 		Email:    u.Email,
@@ -62,6 +77,7 @@ func (u *User) ToProto() *pb.User {
 	}
 }
 
+// Hash users password (bcrypt).
 func (u *User) HashPassword() error {
 	passBytes, err := bcrypt.GenerateFromPassword([]byte(u.Password), 14)
 	if err == nil {
@@ -71,23 +87,33 @@ func (u *User) HashPassword() error {
 	return err
 }
 
+// Checks users hash.
 func (u *User) CheckPasswordHash(hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(u.Password))
 	return err == nil
 }
 
+// Token struct keeps user's jwt token.
 type Token struct {
+	// Users's email.
 	Email string `json:"email"`
+	// Users's jwt token.
 	Token string `json:"token"`
 }
 
+// Password model.
 type Password struct {
-	Login    string `json:"login"`
+	// Login.
+	Login string `json:"login"`
+	// Password.
 	Password string `json:"password"`
-	Tag      string `json:"tag"`
-	ID       string `json:"id"`
+	// Tag - string which describes for what this password.
+	Tag string `json:"tag"`
+	// Uniq uuid.
+	ID string `json:"id"`
 }
 
+// GetData - returns marshled  struct.
 func (d Password) GetData() []byte {
 	if d.ID == "" {
 		d.ID = uuid.NewString()
@@ -98,6 +124,8 @@ func (d Password) GetData() []byte {
 	}
 	return data
 }
+
+// GetID - returns uuid of data.
 func (d Password) GetID() string {
 	if d.ID == "" {
 		return uuid.NewString()
@@ -105,21 +133,29 @@ func (d Password) GetID() string {
 	return d.ID
 }
 
+// Set new uuid for data.
 func (d *Password) SetID() {
 	if d.ID == "" {
 		d.ID = uuid.NewString()
 	}
 }
+
+// Return type of data.
 func (d Password) Type() string {
 	return "PASSWORD"
 }
 
+// Data model for files.
 type Data struct {
+	// Data - slice of file bytes.
 	Data []byte `json:"data"`
-	Tag  string `json:"tag"`
-	ID   string `json:"id"`
+	// Tag - user given data.
+	Tag string `json:"tag"`
+	// Uniq uuid.
+	ID string `json:"id"`
 }
 
+// Return marshled object.
 func (d Data) GetData() []byte {
 	if d.ID == "" {
 		d.ID = uuid.NewString()
@@ -130,22 +166,31 @@ func (d Data) GetData() []byte {
 	}
 	return data
 }
+
+// Return uuid of data.
 func (d Data) GetID() string {
 	if d.ID == "" {
 		return uuid.NewString()
 	}
 	return d.ID
 }
+
+// Return type of data.
 func (d Data) Type() string {
 	return "DATA"
 }
 
+// Model for texts.
 type Text struct {
+	// Data - string.
 	Data string `json:"data"`
-	Tag  string `json:"tag"`
-	ID   string `json:"id"`
+	// User given string.
+	Tag string `json:"tag"`
+	// Uniq uuid.
+	ID string `json:"id"`
 }
 
+// Returns marshled object.
 func (d Text) GetData() []byte {
 	if d.ID == "" {
 		d.ID = uuid.NewString()
@@ -156,25 +201,37 @@ func (d Text) GetData() []byte {
 	}
 	return data
 }
+
+// Returns uuid of data.
 func (d Text) GetID() string {
 	if d.ID == "" {
 		return uuid.NewString()
 	}
 	return d.ID
 }
+
+// Return type of data.
 func (d Text) Type() string {
 	return "TEXT"
 }
 
+// Model of credit cards data.
 type CreditCard struct {
+	// CardNum - string which contains CC Number.
 	CardNum string `json:"cardnum"`
-	Exp     string `json:"exp"`
-	Name    string `json:"name"`
-	CVV     string `json:"cvv"`
-	Tag     string `json:"tag"`
-	ID      string `json:"id"`
+	// Exp - strinf which contains CC expitation date.
+	Exp string `json:"exp"`
+	// Name - name on credit card.
+	Name string `json:"name"`
+	// CVV -string contains CVV.
+	CVV string `json:"cvv"`
+	// User given data.
+	Tag string `json:"tag"`
+	// Uniq uuid.
+	ID string `json:"id"`
 }
 
+// Returns marshled object.
 func (d CreditCard) GetData() []byte {
 	if d.ID == "" {
 		d.ID = uuid.NewString()
@@ -185,16 +242,21 @@ func (d CreditCard) GetData() []byte {
 	}
 	return data
 }
+
+// Returns uuid of data.
 func (d CreditCard) GetID() string {
 	if d.ID == "" {
 		return uuid.NewString()
 	}
 	return d.ID
 }
+
+// Return type of data.
 func (d CreditCard) Type() string {
 	return "CC"
 }
 
+// Interface for database.
 type Storager interface {
 	AddUser(User) error
 	GetUser(User) (User, error)
@@ -203,6 +265,7 @@ type Storager interface {
 	DelCiphereData(string) error
 }
 
+// Interface for data converting.
 type Dater interface {
 	GetData() []byte
 	GetID() string

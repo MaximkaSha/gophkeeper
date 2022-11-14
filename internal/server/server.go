@@ -1,3 +1,4 @@
+// Packager server implements gRPC server.
 package server
 
 import (
@@ -11,12 +12,16 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// GophkeeperServer - server struct.
 type GophkeeperServer struct {
+	// Database interface.
 	DB models.Storager
 	pb.UnimplementedGophkeeperServer
+	// Serves's config.
 	Config *config.ServerConfig
 }
 
+// COnstructor of GophkeeperServer
 func NewGophkeeperServer() GophkeeperServer {
 	config := config.NewServerConfig()
 	return GophkeeperServer{
@@ -25,6 +30,7 @@ func NewGophkeeperServer() GophkeeperServer {
 	}
 }
 
+// AddCipheredData - gRPC endpoint push data to server's db.
 func (g GophkeeperServer) AddCipheredData(ctx context.Context, in *pb.AddCipheredDataRequest) (*pb.AddCipheredDataResponse, error) {
 	var response pb.AddCipheredDataResponse
 	data := models.CipheredData{}
@@ -36,6 +42,7 @@ func (g GophkeeperServer) AddCipheredData(ctx context.Context, in *pb.AddCiphere
 	return &response, nil
 }
 
+// GetCipheredDataForUserRequest gRPC endpoint returns all data for given user.
 func (g GophkeeperServer) GetCipheredDataForUserRequest(ctx context.Context, in *pb.GetCipheredDataRequest) (*pb.GetCipheredDataResponse, error) {
 	var response pb.GetCipheredDataResponse
 	data, err := g.DB.GetCipheredData(in.Email)
@@ -49,6 +56,7 @@ func (g GophkeeperServer) GetCipheredDataForUserRequest(ctx context.Context, in 
 	return &response, nil
 }
 
+// DelCipheredData - gRPC endpoint delete data from by given uuid
 func (g GophkeeperServer) DelCipheredData(ctx context.Context, in *pb.DelCipheredDataRequest) (*pb.DelCiphereDataResponse, error) {
 	var response pb.DelCiphereDataResponse
 	err := g.DB.DelCiphereData(in.Uuid)
