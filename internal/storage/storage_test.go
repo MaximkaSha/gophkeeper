@@ -167,9 +167,12 @@ func TestStorage_AddCipheredData(t *testing.T) {
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
 			}
-			mock.ExpectExec("INSERT INTO").WithArgs(tt.args.data.Data, tt.args.data.Type, tt.args.data.User, tt.args.data.ID).WillReturnResult(sqlmock.NewResult(1, 1)).WillReturnError(errors.New("no data"))
+			mock.ExpectExec("INSERT INTO").WithArgs(tt.args.data.Data, "no data", tt.args.data.User, tt.args.data.ID).WillReturnResult(sqlmock.NewResult(1, 1)).WillReturnError(errors.New("no data"))
 			tt.args.data.Type = "no data"
 			err = tt.s.AddCipheredData(tt.args.data)
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
 			require.Error(t, err)
 
 		})

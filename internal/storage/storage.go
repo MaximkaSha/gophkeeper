@@ -51,14 +51,13 @@ func (s *Storage) initDB() error {
 	CheckError(err) */
 	err = s.CreateTableIfNotExist()
 	CheckError(err)
-
 	return err
 }
 
 // CheckError Checks and print databse error.
 func CheckError(err error) {
 	if err != nil {
-		log.Fatalf("Database error: %s", err.Error())
+		log.Printf("Database error: %s", err.Error())
 	}
 }
 
@@ -72,7 +71,7 @@ func (s Storage) CreateDBIfNotExist() error {
 	return err
 }
 */
-// CreateTableIfNotExist Create DBs tables if needed
+// CreateTableIfNotExist Create DBs tables if needed.
 func (s Storage) CreateTableIfNotExist() error {
 	var query = `
 CREATE TABLE IF NOT EXISTS users
