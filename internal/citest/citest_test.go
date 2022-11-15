@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/rand"
 	"net"
 	"testing"
@@ -22,34 +21,29 @@ import (
 )
 
 func Test_citest(t *testing.T) {
-	log.Println("-----Starting gRPC server-----")
+	t.Log("-----Starting gRPC server-----")
 	Server := server.NewGophkeeperServer()
 	Auth := authserver.NewAuthGophkeeperServer()
 	listen, err := net.Listen("tcp", Server.Config.Addr)
-	if err != nil {
-		log.Fatal(err)
-	}
+	require.NoError(t, err, "error starting gRPC server")
 
 	creds, err := credentials.NewServerTLSFromFile(Server.Config.CertFile, Server.Config.CertKey)
-	if err != nil {
-		log.Fatal(err)
-	}
+	require.NoError(t, err, "error  reading server ceritficate")
 	s := grpc.NewServer(grpc.StreamInterceptor(grpc_auth.StreamServerInterceptor(Auth.AuthFunc)),
 		grpc.UnaryInterceptor(grpc_auth.UnaryServerInterceptor(Auth.AuthFunc)),
 		grpc.Creds(creds))
 	pb.RegisterGophkeeperServer(s, Server)
 	pb.RegisterAuthGophkeeperServer(s, Auth)
 	go s.Serve(listen)
-	log.Println("-----Gophkeeper Server Started-----")
-
+	t.Log("-----Gophkeeper Server Started-----")
 	client := client.NewClient("Test", "Test")
-	log.Println("-----Gophkeeper Client Started-----")
+	t.Log("-----Gophkeeper Client Started-----")
 	testCI(t, client)
 }
 
 func testCI(t *testing.T, client *client.Client) {
 	ctx := context.Background()
-	log.Println("------USER Register/Login--------")
+	t.Log("------USER Register/Login--------")
 	rand.Seed(time.Now().UnixNano())
 	user := models.User{
 		Email:    "test@test.com" + fmt.Sprintf("%v", (rand.Intn(10000))),
@@ -59,9 +53,9 @@ func testCI(t *testing.T, client *client.Client) {
 	require.NoError(t, err, "User Register Error")
 	err = client.UserLogin(ctx, user)
 	require.NoError(t, err, "User Login Error")
-	log.Println("----Register/Login completed with no erros----")
+	t.Log("----Register/Login completed with no erros----")
 	go client.RefreshToken(ctx)
-	log.Println("------CipheredData Add--------")
+	t.Log("------CipheredData Add--------")
 	testData := []models.Dater{}
 	dataP := models.Password{
 		Login:    "Login Test",
@@ -91,10 +85,10 @@ func testCI(t *testing.T, client *client.Client) {
 		err = client.AddData(ctx, val)
 		require.NoError(t, err, "Error adding data to storage.")
 	}
-	log.Println("------CipheredData Added successfully--------")
+	t.Log("------CipheredData Added successfully--------")
 	err = client.GetAllDataFromDB(ctx)
 	require.NoError(t, err, "Error getting data from DB")
-	log.Print("-------Checking data from DB----------")
+	t.Log("-------Checking data from DB----------")
 	for _, val := range client.AllData {
 		switch val.Type {
 		case "PASSWORD":
@@ -103,7 +97,7 @@ func testCI(t *testing.T, client *client.Client) {
 			require.Equal(t, dataP.Login, pass.Login, "Logins not equal")
 			require.Equal(t, dataP.Password, pass.Password, "Passwords not equal")
 			require.Equal(t, dataP.Tag, pass.Tag, "Tag not equal")
-			log.Println("Passwords equal!")
+			t.Log("		Passwords equal!")
 		case "CC":
 			cc := models.CreditCard{}
 			json.Unmarshal(val.JData, &cc)
@@ -112,28 +106,28 @@ func testCI(t *testing.T, client *client.Client) {
 			require.Equal(t, dataC.CVV, cc.CVV, "CC CVV not equal")
 			require.Equal(t, dataC.Name, cc.Name, "CC Name not equal")
 			require.Equal(t, dataC.Tag, cc.Tag, "CC Tag not equal")
-			log.Println("CC equal!")
+			t.Log("		CC equal!")
 		case "DATA":
 			data := models.Data{}
 			json.Unmarshal(val.JData, &data)
 			require.Equal(t, dataD.Data, data.Data, "Data not equal")
 			require.Equal(t, dataD.Tag, data.Tag, "Data tag not equal")
-			log.Println("DATA equal!")
+			t.Log("		DATA equal!")
 		case "TEXT":
 			text := models.Text{}
 			json.Unmarshal(val.JData, &text)
 			require.Equal(t, dataT.Data, text.Data, "Text data not equal")
 			require.Equal(t, dataT.Tag, text.Tag, "Text tag not equal")
-			log.Println("TEXT equal!")
+			t.Log("		TEXT equal!")
 		}
 
 	}
-	log.Print("-------All data from DB checked----------")
-	log.Print("-------Deleting data from DB----------")
+	t.Log("-------All data from DB checked----------")
+	t.Log("-------Deleting data from DB----------")
 	for _, val := range client.AllData {
 		err := client.DelData(ctx, val.ID)
 		require.NoError(t, err, "Error delelting data from DB")
 	}
-	log.Print("-------Deleting data from DB----------")
-	log.Print("-------All test passed----------")
+	t.Log("-------Deleting data from DB----------")
+	t.Log("-------All test passed----------")
 }

@@ -2,6 +2,6 @@
 package citest
 
 // citest integration testing
-//lint:ignore U1000
+//lint:ignore U1000 this is for ci tests
 func citest() { // nolint:staticcheck
 }
