@@ -16,14 +16,12 @@ import (
 	"github.com/MaximkaSha/gophkeeper/internal/server"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
 func Test_citest(t *testing.T) {
-	tt := suite.Suite{}
-	tt.T().Log("-----Starting gRPC server-----")
+	t.Log("-----Starting gRPC server-----")
 	Server := server.NewGophkeeperServer()
 	Auth := authserver.NewAuthGophkeeperServer()
 	listen, err := net.Listen("tcp", Server.Config.Addr)
@@ -37,16 +35,15 @@ func Test_citest(t *testing.T) {
 	pb.RegisterGophkeeperServer(s, Server)
 	pb.RegisterAuthGophkeeperServer(s, Auth)
 	go s.Serve(listen)
-	tt.T().Log("-----Gophkeeper Server Started-----")
+	t.Log("-----Gophkeeper Server Started-----")
 	client := client.NewClient("Test", "Test")
-	tt.T().Log("-----Gophkeeper Client Started-----")
+	t.Log("-----Gophkeeper Client Started-----")
 	testCI(t, client)
 }
 
 func testCI(t *testing.T, client *client.Client) {
-	tt := suite.Suite{}
 	ctx := context.Background()
-	tt.T().Log("------USER Register/Login--------")
+	t.Log("------USER Register/Login--------")
 	rand.Seed(time.Now().UnixNano())
 	user := models.User{
 		Email:    "test@test.com" + fmt.Sprintf("%v", (rand.Intn(10000))),
@@ -56,9 +53,9 @@ func testCI(t *testing.T, client *client.Client) {
 	require.NoError(t, err, "User Register Error")
 	err = client.UserLogin(ctx, user)
 	require.NoError(t, err, "User Login Error")
-	tt.T().Log("----Register/Login completed with no erros----")
+	t.Log("----Register/Login completed with no erros----")
 	go client.RefreshToken(ctx)
-	tt.T().Log("------CipheredData Add--------")
+	t.Log("------CipheredData Add--------")
 	testData := []models.Dater{}
 	dataP := models.Password{
 		Login:    "Login Test",
@@ -88,10 +85,10 @@ func testCI(t *testing.T, client *client.Client) {
 		err = client.AddData(ctx, val)
 		require.NoError(t, err, "Error adding data to storage.")
 	}
-	tt.T().Log("------CipheredData Added successfully--------")
+	t.Log("------CipheredData Added successfully--------")
 	err = client.GetAllDataFromDB(ctx)
 	require.NoError(t, err, "Error getting data from DB")
-	tt.T().Log("-------Checking data from DB----------")
+	t.Log("-------Checking data from DB----------")
 	for _, val := range client.AllData {
 		switch val.Type {
 		case "PASSWORD":
@@ -100,7 +97,7 @@ func testCI(t *testing.T, client *client.Client) {
 			require.Equal(t, dataP.Login, pass.Login, "Logins not equal")
 			require.Equal(t, dataP.Password, pass.Password, "Passwords not equal")
 			require.Equal(t, dataP.Tag, pass.Tag, "Tag not equal")
-			tt.T().Log("		Passwords equal!")
+			t.Log("		Passwords equal!")
 		case "CC":
 			cc := models.CreditCard{}
 			json.Unmarshal(val.JData, &cc)
@@ -109,28 +106,28 @@ func testCI(t *testing.T, client *client.Client) {
 			require.Equal(t, dataC.CVV, cc.CVV, "CC CVV not equal")
 			require.Equal(t, dataC.Name, cc.Name, "CC Name not equal")
 			require.Equal(t, dataC.Tag, cc.Tag, "CC Tag not equal")
-			tt.T().Log("		CC equal!")
+			t.Log("		CC equal!")
 		case "DATA":
 			data := models.Data{}
 			json.Unmarshal(val.JData, &data)
 			require.Equal(t, dataD.Data, data.Data, "Data not equal")
 			require.Equal(t, dataD.Tag, data.Tag, "Data tag not equal")
-			tt.T().Log("		DATA equal!")
+			t.Log("		DATA equal!")
 		case "TEXT":
 			text := models.Text{}
 			json.Unmarshal(val.JData, &text)
 			require.Equal(t, dataT.Data, text.Data, "Text data not equal")
 			require.Equal(t, dataT.Tag, text.Tag, "Text tag not equal")
-			tt.T().Log("		TEXT equal!")
+			t.Log("		TEXT equal!")
 		}
 
 	}
-	tt.T().Log("-------All data from DB checked----------")
-	tt.T().Log("-------Deleting data from DB----------")
+	t.Log("-------All data from DB checked----------")
+	t.Log("-------Deleting data from DB----------")
 	for _, val := range client.AllData {
 		err := client.DelData(ctx, val.ID)
 		require.NoError(t, err, "Error delelting data from DB")
 	}
-	tt.T().Log("-------Deleting data from DB----------")
-	tt.T().Log("-------All test passed----------")
+	t.Log("-------Deleting data from DB----------")
+	t.Log("-------All test passed----------")
 }
