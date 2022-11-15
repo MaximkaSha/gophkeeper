@@ -3,10 +3,12 @@ package storage
 
 import (
 	//"context"
+	"context"
 	"crypto/rand"
 	"database/sql"
 	"errors"
 	"log"
+	"time"
 
 	//"time"
 
@@ -46,9 +48,9 @@ func (s *Storage) initDB() error {
 	err = s.DB.Ping()
 	CheckError(err)
 	/*err = s.CreateDBIfNotExist()
-	CheckError(err)
-	err = s.CreateTableIfNotExist()
 	CheckError(err) */
+	err = s.CreateTableIfNotExist()
+	CheckError(err)
 
 	return err
 }
@@ -56,7 +58,7 @@ func (s *Storage) initDB() error {
 // CheckError Checks and print databse error.
 func CheckError(err error) {
 	if err != nil {
-		log.Printf("Database error: %s", err.Error())
+		log.Fatalf("Database error: %s", err.Error())
 	}
 }
 
@@ -69,21 +71,21 @@ func (s Storage) CreateDBIfNotExist() error {
 	_, err := s.DB.ExecContext(ctx, query)
 	return err
 }
-
+*/
 func (s Storage) CreateTableIfNotExist() error {
 	var query = `
-CREATE TABLE IF NOT EXISTS public.users
+CREATE TABLE IF NOT EXISTS users
 (
-    email character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    password character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    email character varying(100) NOT NULL,
+    password character varying(100) NOT NULL,
     id serial,
     secret bytea,
     CONSTRAINT users_pkey PRIMARY KEY (email)
 );
-CREATE TABLE IF NOT EXISTS public.ciphereddata
+CREATE TABLE IF NOT EXISTS ciphereddata
 (
     data bytea,
-    type character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    type character varying(100) NOT NULL,
     user_id serial,
     uuid uuid NOT NULL,
     CONSTRAINT ciphereddata_pkey PRIMARY KEY (uuid)
@@ -99,7 +101,6 @@ CREATE TABLE IF NOT EXISTS public.ciphereddata
 
 	return err
 }
-*/
 
 // AddUser - insert user to database.
 func (s Storage) AddUser(user models.User) error {

@@ -116,7 +116,6 @@ func UpdateTable(ctx context.Context, c client.Client, table *tview.Table) *tvie
 		if c.AllData[i].Type == "PASSWORD" {
 			data := models.Password{}
 			json.Unmarshal(c.AllData[i].JData, &data)
-			log.Println("Alldata ", data)
 			c.AddDataToLocalStorageUI(ctx, data)
 		}
 		if c.AllData[i].Type == "CC" {

@@ -22,7 +22,7 @@ type ServerConfig struct {
 func NewServerConfig() *ServerConfig {
 
 	viper.AddConfigPath("./")
-	viper.SetConfigName("config")
+	viper.SetConfigName("config_server")
 	viper.SetConfigType("json")
 	viper.ReadInConfig()
 
@@ -48,7 +48,7 @@ type ClientConfig struct {
 func NewClientConfig() *ClientConfig {
 
 	viper.AddConfigPath("./")
-	viper.SetConfigName("config")
+	viper.SetConfigName("config_client")
 	viper.SetConfigType("json")
 	viper.ReadInConfig()
 
