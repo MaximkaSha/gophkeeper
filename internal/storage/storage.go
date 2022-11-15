@@ -61,17 +61,7 @@ func CheckError(err error) {
 	}
 }
 
-/*
-func (s Storage) CreateDBIfNotExist() error {
-	var query = `SELECT 'CREATE DATABASE gophkeeper'
-	WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname  = 'gophkeeper')`
-	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancelfunc()
-	_, err := s.DB.ExecContext(ctx, query)
-	return err
-}
-*/
-// CreateTableIfNotExist Create DBs tables if needed.
+// CreateTableIfNotExist creates DBs tables if needed.
 func (s Storage) CreateTableIfNotExist() error {
 	var query = `
 CREATE TABLE IF NOT EXISTS users
@@ -197,3 +187,14 @@ func (s Storage) DelCiphereData(uuid string) error {
 	}
 	return nil
 }
+
+/*
+func (s Storage) CreateDBIfNotExist() error {
+	var query = `SELECT 'CREATE DATABASE gophkeeper'
+	WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname  = 'gophkeeper')`
+	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelfunc()
+	_, err := s.DB.ExecContext(ctx, query)
+	return err
+}
+*/
