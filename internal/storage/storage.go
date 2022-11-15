@@ -72,6 +72,7 @@ func (s Storage) CreateDBIfNotExist() error {
 	return err
 }
 */
+// CreateTableIfNotExist Create DBs tables if needed
 func (s Storage) CreateTableIfNotExist() error {
 	var query = `
 CREATE TABLE IF NOT EXISTS users
