@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package gophkeeper;
+
+option go_package = "gophkeeper/internal/proto";
+
+// Ciphered Data type.
+
+message CipheredData {
+  bytes data = 1;
+  enum Type {
+    PASSWORD = 0;
+    DATA = 1;
+    TEXT = 2;
+    CC = 3;
+ }
+ Type type =2;
+  string useremail = 3;
+  string uuid =4 ;
+}
+
+message AddCipheredDataRequest {
+  CipheredData data = 1;
+}
+
+message AddCipheredDataResponse {
+}
+
+message GetCipheredDataRequest {
+  string email = 1;
+}
+message GetCipheredDataResponse {
+  repeated CipheredData data = 1;
+}
+
+message DelCipheredDataRequest{
+  string uuid = 1;
+}
+message DelCiphereDataResponse{
+}
+
+
+
+
+
+service Gophkeeper {
+  rpc AddCipheredData(AddCipheredDataRequest) returns(AddCipheredDataResponse);
+  rpc GetCipheredDataForUserRequest(GetCipheredDataRequest) returns(GetCipheredDataResponse);
+  rpc DelCipheredData(DelCipheredDataRequest) returns(DelCiphereDataResponse);
+
+}

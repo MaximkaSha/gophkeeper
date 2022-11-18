@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package authgophkeeper;
+
+option go_package = "gophkeeper/internal/proto";
+
+
+// Password type group.
+
+message User {
+  string email = 1;
+  string password = 2;
+  bytes secret =3; 
+}
+
+message Token {
+  string email = 1;
+  string token = 2;
+  int64  expires = 3;
+}
+
+message UserRegisterRequest {
+  User user = 1;
+}
+message UserRegisterResponse {
+}
+
+message UserLoginRequest {
+  User user = 1;
+}
+message UserLoginResponse {
+  Token token = 1;
+  User user = 2;
+}
+
+message RefreshRequest{
+  Token token = 1;
+}
+
+message RefreshResponse{
+  Token token = 1;
+}
+service AuthGophkeeper {
+  rpc UserRegister(UserRegisterRequest) returns(UserRegisterResponse);
+  rpc UserLogin(UserLoginRequest) returns(UserLoginResponse);
+  rpc Refresh(RefreshRequest) returns(RefreshResponse);
+}

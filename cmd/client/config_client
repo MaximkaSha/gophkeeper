@@ -1,0 +1,4 @@
+{
+  "addr":"localhost:3200",
+  "certfile":"cert.pem"
+}
